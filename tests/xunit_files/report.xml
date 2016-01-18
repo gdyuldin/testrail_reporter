@@ -1,0 +1,1124 @@
+<?xml version="1.0" encoding="utf-8"?><testsuite errors="0" failures="13" name="pytest" skips="25" tests="65" time="19105.135"><testcase classname="mos_tests.neutron.python_tests.test_ban_dhcp_agent.TestBanDHCPAgent" file="mos_tests/neutron/python_tests/test_ban_dhcp_agent.py" line="221" name="test_ban_some_dhcp_agents[1]" time="325.891252995"></testcase><testcase classname="mos_tests.neutron.python_tests.test_ban_dhcp_agent.TestBanDHCPAgent" file="mos_tests/neutron/python_tests/test_ban_dhcp_agent.py" line="221" name="test_ban_some_dhcp_agents[2]" time="276.994319201"></testcase><testcase classname="mos_tests.neutron.python_tests.test_ban_dhcp_agent.TestBanDHCPAgent" file="mos_tests/neutron/python_tests/test_ban_dhcp_agent.py" line="272" name="test_ban_all_dhcp_agents_and_restart_one" time="308.99364996"></testcase><testcase classname="mos_tests.neutron.python_tests.test_ban_dhcp_agent.TestBanDHCPAgent" file="mos_tests/neutron/python_tests/test_ban_dhcp_agent.py" line="366" name="test_multiple_ban_dhcp_agents_and_restart_first" time="1432.99354982"></testcase><testcase classname="mos_tests.neutron.python_tests.test_ban_dhcp_agent.TestBanDHCPAgent" file="mos_tests/neutron/python_tests/test_ban_dhcp_agent.py" line="484" name="test_ban_dhcp_agent_many_times" time="1767.9923532"></testcase><testcase classname="mos_tests.neutron.python_tests.test_ban_dhcp_agent.TestBanDHCPAgent" file="mos_tests/neutron/python_tests/test_ban_dhcp_agent.py" line="552" name="test_reschedule_dhcp_agents" time="184.996191978"></testcase><testcase classname="mos_tests.neutron.python_tests.test_ban_dhcp_agent.TestBanDHCPAgentWithSettings" file="mos_tests/neutron/python_tests/test_ban_dhcp_agent.py" line="690" name="test_rescheduling_with_one_or_three_dhcp_agents[1]" time="473.995841026"></testcase><testcase classname="mos_tests.neutron.python_tests.test_ban_dhcp_agent.TestBanDHCPAgentWithSettings" file="mos_tests/neutron/python_tests/test_ban_dhcp_agent.py" line="690" name="test_rescheduling_with_one_or_three_dhcp_agents[3]" time="335.988888979"></testcase><testcase classname="mos_tests.neutron.python_tests.test_dhcp_agent.TestDHCPAgent" file="mos_tests/neutron/python_tests/test_dhcp_agent.py" line="58" name="test_to_check_dhcp_agents_work" time="223.568054914"><failure message="TimeoutExpired: Timeout of 60 seconds expired waiting for server avaliable via ssh">self = &lt;mos_tests.neutron.python_tests.test_dhcp_agent.TestDHCPAgent object at 0x7febf9061b90&gt;
+
+    def test_to_check_dhcp_agents_work(self):
+        &quot;&quot;&quot;[Neutron VLAN and VXLAN] Check dhcp-agents work
+
+            TestRail id is C542614
+            Steps:
+                1. Update quotas for creation a lot of networks:
+                    neutron quota-update --network 1000 --subnet 1000
+                                         --router 1000 --port 1000:
+                2. Create 50 networks, subnets, launch and terminate instance
+                3. Get the table with all agents:
+                    neutron agent-list
+                4. Checl networks on each dhcp-agent:
+                    neutron net-list-on-dhcp-agent &lt;id_agent_from_the_table&gt;
+                    Check that there are nets on all of agent
+                5. Check networks quantity on each dhcp-agent:
+                    neutron net-list-on-dhcp-agent &lt;id_agent_from_the_table&gt;
+                  Check that quantity on agents are nearly equal
+            &quot;&quot;&quot;
+
+        tenant = self.os_conn.neutron.get_quotas_tenant()
+        tenant_id = tenant[&apos;tenant&apos;][&apos;tenant_id&apos;]
+        self.os_conn.neutron.update_quota(tenant_id, {&apos;quota&apos;:
+                                                      {&apos;network&apos;: 1000,
+                                                       &apos;router&apos;: 1000,
+                                                       &apos;subnet&apos;: 1000,
+                                                       &apos;port&apos;: 1000}})
+        # According to the test requirements 50 networks should be created
+        # However during implementation found that only about 34 nets
+        # can be created for one tenant. Need to clarify that situation.
+        for x in range(30):
+            net_id = self.os_conn.add_net(self.router[&apos;id&apos;])
+            self.networks.append(net_id)
+            logger.info(&apos;Total networks created at the moment {}&apos;.format(
+                        len(self.networks)))
+            srv = self.os_conn.create_server(
+                      name=&apos;instanseNo{}&apos;.format(x),
+                      key_name=self.instance_keypair.name,
+&gt;                     nics=[{&apos;net-id&apos;: net_id}])
+
+mos_tests/neutron/python_tests/test_dhcp_agent.py:96:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mos_tests/environment/os_actions.py:173: in create_server
+    waiting_for=&apos;server avaliable via ssh&apos;)
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:16: in wait
+    for x in iterwait(result=result, *args, **kwargs):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+predicate = &lt;function &lt;lambda&gt; at 0x7febf9033398&gt;, timeout_seconds = 60, sleep_seconds = 1, result = &lt;waiting._Result object at 0x7febf872b510&gt;
+waiting_for = &apos;server avaliable via ssh&apos;, expected_exceptions = ()
+
+    def iterwait(predicate, timeout_seconds=None, sleep_seconds=1, result=None, waiting_for=None,
+                 expected_exceptions=()):
+
+        if not isinstance(expected_exceptions, tuple) and not (isinstance(expected_exceptions, type)
+                                                               and issubclass(expected_exceptions, Exception)):
+            raise IllegalArgumentError(
+                &apos;expected_exceptions should be tuple or Exception subclass&apos;)
+        timeout = _make_deadline(timeout_seconds)
+        if result is None:
+            result = _Result()
+        if waiting_for is None:
+            waiting_for = str(predicate)
+        sleep_generator = _get_sleep_generator(timeout, sleep_seconds)
+        while True:
+            with _end_sleeping(next(sleep_generator)) as cancel_sleep:
+                try:
+                    result.result = predicate()
+                except expected_exceptions:
+                    pass
+                if result.result:
+                    cancel_sleep()
+                    return
+                if timeout.is_expired():
+&gt;                   raise TimeoutExpired(timeout_seconds, waiting_for)
+E                   TimeoutExpired: Timeout of 60 seconds expired waiting for server avaliable via ssh
+
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:44: TimeoutExpired</failure></testcase><testcase classname="mos_tests.neutron.python_tests.test_dhcp_agent.TestDHCPAgent" file="mos_tests/neutron/python_tests/test_dhcp_agent.py" line="117" name="test_drop_rabbit_port_chedk_dhcp_agent" time="210.990031004"></testcase><testcase classname="mos_tests.neutron.python_tests.test_dhcp_agent.TestDHCPAgent" file="mos_tests/neutron/python_tests/test_dhcp_agent.py" line="200" name="test_kill_active_dhcp_agt" time="260.993529081"></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVR" file="mos_tests/neutron/python_tests/test_dvr.py" line="138" name="test_north_south_connectivity[distributed router-with floating]" time="52.9336550236"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf85ef750&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVR" file="mos_tests/neutron/python_tests/test_dvr.py" line="138" name="test_north_south_connectivity[distributed router-without floating]" time="0.931181907654"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf8512a50&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVR" file="mos_tests/neutron/python_tests/test_dvr.py" line="138" name="test_north_south_connectivity[centralized_router-with floating]" time="1.01509809494"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf8612ed0&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVR" file="mos_tests/neutron/python_tests/test_dvr.py" line="138" name="test_north_south_connectivity[centralized_router-without floating]" time="0.984867811203"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf8fd5650&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVR" file="mos_tests/neutron/python_tests/test_dvr.py" line="160" name="test_connectivity_after_reset_compute" time="0.948571920395"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf85c4910&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVR" file="mos_tests/neutron/python_tests/test_dvr.py" line="189" name="test_shutdown_snat_controller" time="0.862328052521"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf8748490&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVR" file="mos_tests/neutron/python_tests/test_dvr.py" line="232" name="test_north_south_floating_ip_shut_down_br_ex_on_controllers" time="0.879082918167"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf8613550&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVR" file="mos_tests/neutron/python_tests/test_dvr.py" line="264" name="test_north_south_floating_ip_ban_clear_l3_agent_on_compute" time="0.917636156082"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf85a29d0&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVRWestEastConnectivity" file="mos_tests/neutron/python_tests/test_dvr.py" line="356" name="test_routing" time="0.902379989624"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf85e82d0&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVRWestEastConnectivity" file="mos_tests/neutron/python_tests/test_dvr.py" line="376" name="test_routing_after_ban_and_clear_l3_agent" time="0.933688879013"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf8646f90&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVRWestEastConnectivity" file="mos_tests/neutron/python_tests/test_dvr.py" line="410" name="test_routing_after_reset_computes" time="0.887035131454"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf86668d0&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVRWestEastConnectivity" file="mos_tests/neutron/python_tests/test_dvr.py" line="440" name="test_east_west_connectivity_after_destroy_controller" time="1.19509625435"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf85a0c90&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVRWestEastConnectivity" file="mos_tests/neutron/python_tests/test_dvr.py" line="477" name="test_east_west_connectivity_instances_on_the_same_host" time="0.919749975204"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf8647210&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVREastWestConnectivity" file="mos_tests/neutron/python_tests/test_dvr.py" line="565" name="test_routing_east_west" time="0.852008104324"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf8541a90&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVRTypeChange" file="mos_tests/neutron/python_tests/test_dvr.py" line="612" name="test_distributed_router_is_not_updated_to_centralized" time="0.903059005737"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf85a0750&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVRTypeChange" file="mos_tests/neutron/python_tests/test_dvr.py" line="703" name="test_centralized_update_to_distributed" time="0.86899805069"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf8596450&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVRTypeChange" file="mos_tests/neutron/python_tests/test_dvr.py" line="795" name="test_reschedule_router_from_snat_controller" time="1.33825612068"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf8729110&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_dvr.TestDVRTypeChange" file="mos_tests/neutron/python_tests/test_dvr.py" line="841" name="test_create_dvr_by_no_admin_user" time="0.877144813538"><skipped message="Requires: Env deployed with enabled distributed routers support" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febf84bab50&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_floating_ip.TestFloatingIP" file="mos_tests/neutron/python_tests/test_floating_ip.py" line="87" name="test_ssh_after_deleting_floating" time="145.752039909"><failure message="Failed: DID NOT RAISE">self = &lt;mos_tests.neutron.python_tests.test_floating_ip.TestFloatingIP object at 0x7febf84ba590&gt;
+
+    def test_ssh_after_deleting_floating(self):
+        &quot;&quot;&quot;Check ssh-connection by floating ip for vm after
+            deleting floating ip
+
+            Steps:
+                1. Create network net01, subnet net01__subnet with CIDR 10.1.1.0/24
+                2. Create new security group sec_group1
+                3. Add Ingress rule for TCP protocol to sec_group1
+                4. Boot vm1 net01 with sec_group1
+                5. Associate floating IP for vm1
+                6. Go to vm1 with ssh and floating IP
+                7. Without stopping ssh-connection dissociate floating ip from vm
+                8. Check that connection is stopped
+                9. Try to go to vm1 with ssh and floating IP
+
+            Duration 10m
+
+            &quot;&quot;&quot;
+        ip = self.floating_ip[&quot;floating_ip_address&quot;]
+        server = self.os_conn.nova.servers.find(name=&quot;server01&quot;)
+        pkeys = self.convert_private_key_for_vm(
+            [self.instance_keypair.private_key])
+
+        res1 = None
+        res2 = None
+
+        with pytest.raises(SSHException):
+            with self.env.get_ssh_to_vm(ip, private_keys=pkeys,
+                                        **self.cirros_creds) as vm_remote:
+                res1 = vm_remote.execute(&quot;ping -c1 8.8.8.8&quot;)
+                self.os_conn.disassociate_floating_ip(
+                    server, self.floating_ip, use_neutron=True)
+&gt;               res2 = vm_remote.execute(&quot;date&quot;)
+E               Failed: DID NOT RAISE
+
+mos_tests/neutron/python_tests/test_floating_ip.py:120: Failed</failure></testcase><testcase classname="mos_tests.neutron.python_tests.test_l3_agent.TestL3Agent" file="mos_tests/neutron/python_tests/test_l3_agent.py" line="187" name="test_ban_one_l3_agent[once]" time="446.935097933"><failure message="TimeoutExpired: Timeout of 180 seconds expired waiting for l3 agent migrate from node-3.test.domain.local">self = &lt;mos_tests.neutron.python_tests.test_l3_agent.TestL3Agent object at 0x7febf8493f10&gt;, ban_count = 1
+
+    @pytest.mark.parametrize(&apos;ban_count&apos;, [1, 2], ids=[&apos;once&apos;, &apos;twice&apos;])
+    def test_ban_one_l3_agent(self, ban_count):
+        &quot;&quot;&quot;Check l3-agent rescheduling after l3-agent dies on vlan
+
+            Scenario:
+                1. Revert snapshot with neutron cluster
+                2. Create network1, network2
+                3. Create router1 and connect it with network1, network2 and
+                   external net
+                4. Boot vm1 in network1 and associate floating ip
+                5. Boot vm2 in network2
+                6. Add rules for ping
+                7. ping 8.8.8.8, vm1 (both ip) and vm2 (fixed ip) from each other
+                8. get node with l3 agent on what is router1
+                9. ban this l3 agent on the node with pcs
+                    (e.g. pcs resource ban p_neutron-l3-agent
+                    node-3.test.domain.local)
+                10. wait some time (about 20-30) while pcs resource and
+                    neutron agent-list will show that it is dead
+                11. Check that router1 was rescheduled
+                12. Boot vm3 in network1
+                13. ping 8.8.8.8, vm1 (both ip), vm2 (fixed ip) and vm3 (fixed ip)
+                    from each other
+
+            Duration 10m
+
+            &quot;&quot;&quot;
+        net_id = self.os_conn.neutron.list_networks(
+            name=&quot;net01&quot;)[&apos;networks&apos;][0][&apos;id&apos;]
+        devops_node = self.get_node_with_dhcp(net_id)
+        ip = devops_node.data[&apos;ip&apos;]
+
+        # ban l3 agent
+        for _ in range(ban_count):
+&gt;           self.ban_l3_agent(_ip=ip, router_name=&quot;router01&quot;)
+
+mos_tests/neutron/python_tests/test_l3_agent.py:222:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mos_tests/neutron/python_tests/test_l3_agent.py:120: in ban_l3_agent
+    sleep_seconds=(1, 60))
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:16: in wait
+    for x in iterwait(result=result, *args, **kwargs):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+predicate = &lt;function &lt;lambda&gt; at 0x7febf849b6e0&gt;, timeout_seconds = 180, sleep_seconds = (1, 60), result = &lt;waiting._Result object at 0x7febf8490090&gt;
+waiting_for = &apos;l3 agent migrate from node-3.test.domain.local&apos;, expected_exceptions = ()
+
+    def iterwait(predicate, timeout_seconds=None, sleep_seconds=1, result=None, waiting_for=None,
+                 expected_exceptions=()):
+
+        if not isinstance(expected_exceptions, tuple) and not (isinstance(expected_exceptions, type)
+                                                               and issubclass(expected_exceptions, Exception)):
+            raise IllegalArgumentError(
+                &apos;expected_exceptions should be tuple or Exception subclass&apos;)
+        timeout = _make_deadline(timeout_seconds)
+        if result is None:
+            result = _Result()
+        if waiting_for is None:
+            waiting_for = str(predicate)
+        sleep_generator = _get_sleep_generator(timeout, sleep_seconds)
+        while True:
+            with _end_sleeping(next(sleep_generator)) as cancel_sleep:
+                try:
+                    result.result = predicate()
+                except expected_exceptions:
+                    pass
+                if result.result:
+                    cancel_sleep()
+                    return
+                if timeout.is_expired():
+&gt;                   raise TimeoutExpired(timeout_seconds, waiting_for)
+E                   TimeoutExpired: Timeout of 180 seconds expired waiting for l3 agent migrate from node-3.test.domain.local
+
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:44: TimeoutExpired</failure></testcase><testcase classname="mos_tests.neutron.python_tests.test_l3_agent.TestL3Agent" file="mos_tests/neutron/python_tests/test_l3_agent.py" line="187" name="test_ban_one_l3_agent[twice]" time="449.829752922"><failure message="TimeoutExpired: Timeout of 180 seconds expired waiting for l3 agent migrate from node-2.test.domain.local">self = &lt;mos_tests.neutron.python_tests.test_l3_agent.TestL3Agent object at 0x7febf84f9910&gt;, ban_count = 2
+
+    @pytest.mark.parametrize(&apos;ban_count&apos;, [1, 2], ids=[&apos;once&apos;, &apos;twice&apos;])
+    def test_ban_one_l3_agent(self, ban_count):
+        &quot;&quot;&quot;Check l3-agent rescheduling after l3-agent dies on vlan
+
+            Scenario:
+                1. Revert snapshot with neutron cluster
+                2. Create network1, network2
+                3. Create router1 and connect it with network1, network2 and
+                   external net
+                4. Boot vm1 in network1 and associate floating ip
+                5. Boot vm2 in network2
+                6. Add rules for ping
+                7. ping 8.8.8.8, vm1 (both ip) and vm2 (fixed ip) from each other
+                8. get node with l3 agent on what is router1
+                9. ban this l3 agent on the node with pcs
+                    (e.g. pcs resource ban p_neutron-l3-agent
+                    node-3.test.domain.local)
+                10. wait some time (about 20-30) while pcs resource and
+                    neutron agent-list will show that it is dead
+                11. Check that router1 was rescheduled
+                12. Boot vm3 in network1
+                13. ping 8.8.8.8, vm1 (both ip), vm2 (fixed ip) and vm3 (fixed ip)
+                    from each other
+
+            Duration 10m
+
+            &quot;&quot;&quot;
+        net_id = self.os_conn.neutron.list_networks(
+            name=&quot;net01&quot;)[&apos;networks&apos;][0][&apos;id&apos;]
+        devops_node = self.get_node_with_dhcp(net_id)
+        ip = devops_node.data[&apos;ip&apos;]
+
+        # ban l3 agent
+        for _ in range(ban_count):
+&gt;           self.ban_l3_agent(_ip=ip, router_name=&quot;router01&quot;)
+
+mos_tests/neutron/python_tests/test_l3_agent.py:222:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mos_tests/neutron/python_tests/test_l3_agent.py:120: in ban_l3_agent
+    sleep_seconds=(1, 60))
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:16: in wait
+    for x in iterwait(result=result, *args, **kwargs):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+predicate = &lt;function &lt;lambda&gt; at 0x7febf845d7d0&gt;, timeout_seconds = 180, sleep_seconds = (1, 60), result = &lt;waiting._Result object at 0x7febf82ef710&gt;
+waiting_for = &apos;l3 agent migrate from node-2.test.domain.local&apos;, expected_exceptions = ()
+
+    def iterwait(predicate, timeout_seconds=None, sleep_seconds=1, result=None, waiting_for=None,
+                 expected_exceptions=()):
+
+        if not isinstance(expected_exceptions, tuple) and not (isinstance(expected_exceptions, type)
+                                                               and issubclass(expected_exceptions, Exception)):
+            raise IllegalArgumentError(
+                &apos;expected_exceptions should be tuple or Exception subclass&apos;)
+        timeout = _make_deadline(timeout_seconds)
+        if result is None:
+            result = _Result()
+        if waiting_for is None:
+            waiting_for = str(predicate)
+        sleep_generator = _get_sleep_generator(timeout, sleep_seconds)
+        while True:
+            with _end_sleeping(next(sleep_generator)) as cancel_sleep:
+                try:
+                    result.result = predicate()
+                except expected_exceptions:
+                    pass
+                if result.result:
+                    cancel_sleep()
+                    return
+                if timeout.is_expired():
+&gt;                   raise TimeoutExpired(timeout_seconds, waiting_for)
+E                   TimeoutExpired: Timeout of 180 seconds expired waiting for l3 agent migrate from node-2.test.domain.local
+
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:44: TimeoutExpired</failure></testcase><testcase classname="mos_tests.neutron.python_tests.test_l3_agent.TestL3Agent" file="mos_tests/neutron/python_tests/test_l3_agent.py" line="236" name="test_ban_l3_agents_and_clear_last" time="441.919260025"><failure message="TimeoutExpired: Timeout of 180 seconds expired waiting for l3 agent migrate from node-2.test.domain.local">self = &lt;mos_tests.neutron.python_tests.test_l3_agent.TestL3Agent object at 0x7febf839bbd0&gt;
+
+    def test_ban_l3_agents_and_clear_last(self):
+        &quot;&quot;&quot;Ban all l3-agents, clear last of them and check health of l3-agent
+
+            Scenario:
+                1. Revert snapshot with neutron cluster
+                2. Create network1, network2
+                3. Create router1 and connect it with network1, network2 and
+                   external net
+                4. Boot vm1 in network1 and associate floating ip
+                5. Boot vm2 in network2
+                6. Add rules for ping
+                7. ping 8.8.8.8, vm1 (both ip) and vm2 (fixed ip) from each other
+                8. Ban l3-agent on what router1 is
+                9. Wait for route rescheduling
+                10. Repeat steps 7-8 twice
+                11. Clear last L3 agent
+                12. Check that router moved to the health l3-agent
+                13. Boot one more VM (VM3) in network1
+                14. Boot vm3 in network1
+                15. ping 8.8.8.8, vm1 (both ip), vm2 (fixed ip) and vm3 (fixed ip)
+                    from each other
+
+            Duration 10m
+
+            &quot;&quot;&quot;
+        net_id = self.os_conn.neutron.list_networks(
+            name=&quot;net01&quot;)[&apos;networks&apos;][0][&apos;id&apos;]
+        devops_node = self.get_node_with_dhcp(net_id)
+        ip = devops_node.data[&apos;ip&apos;]
+
+        # ban l3 agents
+        for _ in range(2):
+&gt;           self.ban_l3_agent(router_name=&quot;router01&quot;, _ip=ip)
+
+mos_tests/neutron/python_tests/test_l3_agent.py:269:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mos_tests/neutron/python_tests/test_l3_agent.py:120: in ban_l3_agent
+    sleep_seconds=(1, 60))
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:16: in wait
+    for x in iterwait(result=result, *args, **kwargs):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+predicate = &lt;function &lt;lambda&gt; at 0x7febf845d8c0&gt;, timeout_seconds = 180, sleep_seconds = (1, 60), result = &lt;waiting._Result object at 0x7febf85414d0&gt;
+waiting_for = &apos;l3 agent migrate from node-2.test.domain.local&apos;, expected_exceptions = ()
+
+    def iterwait(predicate, timeout_seconds=None, sleep_seconds=1, result=None, waiting_for=None,
+                 expected_exceptions=()):
+
+        if not isinstance(expected_exceptions, tuple) and not (isinstance(expected_exceptions, type)
+                                                               and issubclass(expected_exceptions, Exception)):
+            raise IllegalArgumentError(
+                &apos;expected_exceptions should be tuple or Exception subclass&apos;)
+        timeout = _make_deadline(timeout_seconds)
+        if result is None:
+            result = _Result()
+        if waiting_for is None:
+            waiting_for = str(predicate)
+        sleep_generator = _get_sleep_generator(timeout, sleep_seconds)
+        while True:
+            with _end_sleeping(next(sleep_generator)) as cancel_sleep:
+                try:
+                    result.result = predicate()
+                except expected_exceptions:
+                    pass
+                if result.result:
+                    cancel_sleep()
+                    return
+                if timeout.is_expired():
+&gt;                   raise TimeoutExpired(timeout_seconds, waiting_for)
+E                   TimeoutExpired: Timeout of 180 seconds expired waiting for l3 agent migrate from node-2.test.domain.local
+
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:44: TimeoutExpired</failure></testcase><testcase classname="mos_tests.neutron.python_tests.test_l3_agent.TestL3Agent" file="mos_tests/neutron/python_tests/test_l3_agent.py" line="292" name="test_ban_l3_agents_and_clear_first" time="458.930733204"><failure message="TimeoutExpired: Timeout of 180 seconds expired waiting for l3 agent migrate from node-3.test.domain.local">self = &lt;mos_tests.neutron.python_tests.test_l3_agent.TestL3Agent object at 0x7febf8367750&gt;
+
+    def test_ban_l3_agents_and_clear_first(self):
+        &quot;&quot;&quot;Ban all l3-agents, clear first of them and check health of l3-agent
+
+            Scenario:
+                1. Revert snapshot with neutron cluster
+                2. Create network1, network2
+                3. Create router1 and connect it with network1, network2 and
+                   external net
+                4. Boot vm1 in network1 and associate floating ip
+                5. Boot vm2 in network2
+                6. Add rules for ping
+                7. ping 8.8.8.8, vm1 (both ip) and vm2 (fixed ip) from each other
+                8. Ban l3-agent on what router1 is
+                9. Wait for route rescheduling
+                10. Repeat steps 7-8
+                11. Ban l3-agent on what router1 is
+                12. Clear first banned L3 agent
+                13. Check that router moved to the health l3-agent
+                14. Boot one more VM (VM3) in network1
+                15. Boot vm3 in network1
+                16. ping 8.8.8.8, vm1 (both ip), vm2 (fixed ip) and vm3 (fixed ip)
+                    from each other
+
+            Duration 10m
+
+            &quot;&quot;&quot;
+        net_id = self.os_conn.neutron.list_networks(
+            name=&quot;net01&quot;)[&apos;networks&apos;][0][&apos;id&apos;]
+        devops_node = self.get_node_with_dhcp(net_id)
+        ip = devops_node.data[&apos;ip&apos;]
+
+        # ban l3 agents
+&gt;       first_banned_node = self.ban_l3_agent(router_name=&quot;router01&quot;, _ip=ip)
+
+mos_tests/neutron/python_tests/test_l3_agent.py:325:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mos_tests/neutron/python_tests/test_l3_agent.py:120: in ban_l3_agent
+    sleep_seconds=(1, 60))
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:16: in wait
+    for x in iterwait(result=result, *args, **kwargs):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+predicate = &lt;function &lt;lambda&gt; at 0x7febf86b9668&gt;, timeout_seconds = 180, sleep_seconds = (1, 60), result = &lt;waiting._Result object at 0x7febf8305b50&gt;
+waiting_for = &apos;l3 agent migrate from node-3.test.domain.local&apos;, expected_exceptions = ()
+
+    def iterwait(predicate, timeout_seconds=None, sleep_seconds=1, result=None, waiting_for=None,
+                 expected_exceptions=()):
+
+        if not isinstance(expected_exceptions, tuple) and not (isinstance(expected_exceptions, type)
+                                                               and issubclass(expected_exceptions, Exception)):
+            raise IllegalArgumentError(
+                &apos;expected_exceptions should be tuple or Exception subclass&apos;)
+        timeout = _make_deadline(timeout_seconds)
+        if result is None:
+            result = _Result()
+        if waiting_for is None:
+            waiting_for = str(predicate)
+        sleep_generator = _get_sleep_generator(timeout, sleep_seconds)
+        while True:
+            with _end_sleeping(next(sleep_generator)) as cancel_sleep:
+                try:
+                    result.result = predicate()
+                except expected_exceptions:
+                    pass
+                if result.result:
+                    cancel_sleep()
+                    return
+                if timeout.is_expired():
+&gt;                   raise TimeoutExpired(timeout_seconds, waiting_for)
+E                   TimeoutExpired: Timeout of 180 seconds expired waiting for l3 agent migrate from node-3.test.domain.local
+
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:44: TimeoutExpired</failure></testcase><testcase classname="mos_tests.neutron.python_tests.test_l3_agent.TestL3Agent" file="mos_tests/neutron/python_tests/test_l3_agent.py" line="359" name="test_l3_agent_after_drop_rabbit_port" time="462.934663773"><failure message="TimeoutExpired: Timeout of 180 seconds expired waiting for l3 agent migrated from node-2.test.domain.local">self = &lt;mos_tests.neutron.python_tests.test_l3_agent.TestL3Agent object at 0x7febf81f3f90&gt;
+
+    def test_l3_agent_after_drop_rabbit_port(self):
+        &quot;&quot;&quot;Drop rabbit port and check l3-agent work
+
+            Scenario:
+                1. Revert snapshot with neutron cluster
+                2. Create network1, network2
+                3. Create router1 and connect it with network1, network2 and
+                   external net
+                4. Boot vm1 in network1 and associate floating ip
+                5. Boot vm2 in network2
+                6. Add rules for ping
+                7. ping 8.8.8.8, vm1 (both ip) and vm2 (fixed ip) from each other
+                8. with iptables in CLI drop rabbit&apos;s port #5673 on what router1 is
+                9. Wait for route rescheduling
+                10. Check that router moved to the health l3-agent
+                11. Boot one more VM (VM3) in network1
+                12. Boot vm3 in network1
+                13. ping 8.8.8.8, vm1 (both ip), vm2 (fixed ip) and vm3 (fixed ip)
+                    from each other
+
+            Duration 10m
+
+            &quot;&quot;&quot;
+        # drop rabbit port
+&gt;       self.drop_rabbit_port(router_name=&quot;router01&quot;)
+
+mos_tests/neutron/python_tests/test_l3_agent.py:384:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mos_tests/neutron/python_tests/test_l3_agent.py:186: in drop_rabbit_port
+    sleep_seconds=(1, 60))
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:16: in wait
+    for x in iterwait(result=result, *args, **kwargs):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+predicate = &lt;function &lt;lambda&gt; at 0x7febf9060758&gt;, timeout_seconds = 180, sleep_seconds = (1, 60), result = &lt;waiting._Result object at 0x7febf81bce50&gt;
+waiting_for = &apos;l3 agent migrated from node-2.test.domain.local&apos;, expected_exceptions = ()
+
+    def iterwait(predicate, timeout_seconds=None, sleep_seconds=1, result=None, waiting_for=None,
+                 expected_exceptions=()):
+
+        if not isinstance(expected_exceptions, tuple) and not (isinstance(expected_exceptions, type)
+                                                               and issubclass(expected_exceptions, Exception)):
+            raise IllegalArgumentError(
+                &apos;expected_exceptions should be tuple or Exception subclass&apos;)
+        timeout = _make_deadline(timeout_seconds)
+        if result is None:
+            result = _Result()
+        if waiting_for is None:
+            waiting_for = str(predicate)
+        sleep_generator = _get_sleep_generator(timeout, sleep_seconds)
+        while True:
+            with _end_sleeping(next(sleep_generator)) as cancel_sleep:
+                try:
+                    result.result = predicate()
+                except expected_exceptions:
+                    pass
+                if result.result:
+                    cancel_sleep()
+                    return
+                if timeout.is_expired():
+&gt;                   raise TimeoutExpired(timeout_seconds, waiting_for)
+E                   TimeoutExpired: Timeout of 180 seconds expired waiting for l3 agent migrated from node-2.test.domain.local
+
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:44: TimeoutExpired</failure></testcase><testcase classname="mos_tests.neutron.python_tests.test_l3_agent.TestL3Agent" file="mos_tests/neutron/python_tests/test_l3_agent.py" line="388" name="test_ban_l3_agents_many_times" time="452.932374954"><failure message="TimeoutExpired: Timeout of 180 seconds expired waiting for l3 agent migrate from node-3.test.domain.local">self = &lt;mos_tests.neutron.python_tests.test_l3_agent.TestL3Agent object at 0x7febf81ba9d0&gt;
+
+    def test_ban_l3_agents_many_times(self):
+        &quot;&quot;&quot;Ban l3-agent many times and check health of l3-agent
+
+            Scenario:
+                1. Revert snapshot with neutron cluster
+                2. Create network1, network2
+                3. Create router1 and connect it with network1, network2 and
+                   external net
+                4. Boot vm1 in network1 and associate floating ip
+                5. Boot vm2 in network2
+                6. Add rules for ping
+                7. ping 8.8.8.8, vm1 (both ip) and vm2 (fixed ip) from each other
+                8. Ban l3-agent on what router1 is
+                9. Wait for route rescheduling
+                10. Repeat steps 7-8
+                11. Ban l3-agent on what router1 is
+                12. Wait for L3 agent dies
+                13. Clear last banned L3 agent
+                14. Wait for L3 agent alive
+                15. Repeat steps 11-14 40 times
+                16. Boot one more VM (VM3) in network1
+                17. Boot vm3 in network1
+                18. ping 8.8.8.8, vm1 (both ip), vm2 (fixed ip) and vm3 (fixed ip)
+                    from each other vm
+
+            Duration 30m
+
+            &quot;&quot;&quot;
+        net_id = self.os_conn.neutron.list_networks(
+            name=&quot;net01&quot;)[&apos;networks&apos;][0][&apos;id&apos;]
+        devops_node = self.get_node_with_dhcp(net_id)
+        ip = devops_node.data[&apos;ip&apos;]
+
+        # ban 2 l3 agents
+        for _ in range(2):
+&gt;           self.ban_l3_agent(router_name=&quot;router01&quot;, _ip=ip)
+
+mos_tests/neutron/python_tests/test_l3_agent.py:424:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mos_tests/neutron/python_tests/test_l3_agent.py:120: in ban_l3_agent
+    sleep_seconds=(1, 60))
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:16: in wait
+    for x in iterwait(result=result, *args, **kwargs):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+predicate = &lt;function &lt;lambda&gt; at 0x7febf81150c8&gt;, timeout_seconds = 180, sleep_seconds = (1, 60), result = &lt;waiting._Result object at 0x7febf80f0090&gt;
+waiting_for = &apos;l3 agent migrate from node-3.test.domain.local&apos;, expected_exceptions = ()
+
+    def iterwait(predicate, timeout_seconds=None, sleep_seconds=1, result=None, waiting_for=None,
+                 expected_exceptions=()):
+
+        if not isinstance(expected_exceptions, tuple) and not (isinstance(expected_exceptions, type)
+                                                               and issubclass(expected_exceptions, Exception)):
+            raise IllegalArgumentError(
+                &apos;expected_exceptions should be tuple or Exception subclass&apos;)
+        timeout = _make_deadline(timeout_seconds)
+        if result is None:
+            result = _Result()
+        if waiting_for is None:
+            waiting_for = str(predicate)
+        sleep_generator = _get_sleep_generator(timeout, sleep_seconds)
+        while True:
+            with _end_sleeping(next(sleep_generator)) as cancel_sleep:
+                try:
+                    result.result = predicate()
+                except expected_exceptions:
+                    pass
+                if result.result:
+                    cancel_sleep()
+                    return
+                if timeout.is_expired():
+&gt;                   raise TimeoutExpired(timeout_seconds, waiting_for)
+E                   TimeoutExpired: Timeout of 180 seconds expired waiting for l3 agent migrate from node-3.test.domain.local
+
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:44: TimeoutExpired</failure></testcase><testcase classname="mos_tests.neutron.python_tests.test_l3_agent.TestL3Agent" file="mos_tests/neutron/python_tests/test_l3_agent.py" line="440" name="test_shutdown_not_primary_controller" time="597.9375"><failure message="TimeoutExpired: Timeout of 300 seconds expired waiting for migrating all routers from died L3 agent">self = &lt;mos_tests.neutron.python_tests.test_l3_agent.TestL3Agent object at 0x7febf8256a10&gt;, env_name = &apos;gd_8_362&apos;
+
+    @pytest.mark.need_devops
+    def test_shutdown_not_primary_controller(self, env_name):
+        &quot;&quot;&quot;Shut down non-primary controller and check l3-agent work
+
+            Scenario:
+                1. Revert snapshot with neutron cluster
+                2. Create network1, network2
+                3. Create router1 and connect it with network1, network2 and
+                   external net
+                4. Boot vm1 in network1 and associate floating ip
+                5. Boot vm2 in network2
+                6. Add rules for ping
+                7. ping 8.8.8.8, vm1 (both ip) and vm2 (fixed ip) from each other
+                8. Check on what agents is router1
+                9. If agent on primary controller move it to any other controller
+                10. Destroy non primary controller
+                11. Wait for L3 agent dies
+                12. Check that all routers reschedule from non primary controller
+                13. Boot one more VM (VM3) in network1
+                14. Boot vm3 in network1
+                15. ping 8.8.8.8, vm1 (both ip), vm2 (fixed ip) and vm3 (fixed ip)
+                    from each other vm
+
+            Duration 10m
+
+            &quot;&quot;&quot;
+        router = self.os_conn.neutron.list_routers(
+            name=&apos;router01&apos;)[&apos;routers&apos;][0]
+        l3_agent = self.os_conn.get_l3_for_router(router[&apos;id&apos;])[&apos;agents&apos;][0]
+        leader_node = self.env.leader_controller
+
+        # Move router to slave l3 agent, if needed
+        if leader_node.data[&apos;fqdn&apos;] == l3_agent[&apos;host&apos;]:
+            l3_agents = self.os_conn.list_l3_agents()
+            leader_l3_agent = [x for x in l3_agents
+                               if x[&apos;host&apos;] == leader_node.data[&apos;fqdn&apos;]][0]
+            self.os_conn.neutron.remove_router_from_l3_agent(
+                leader_l3_agent[&apos;id&apos;],
+                router_id=router[&apos;id&apos;])
+            slave_l3_agents = [x for x in l3_agents if x != leader_l3_agent]
+            l3_agent = slave_l3_agents[0]
+            self.os_conn.neutron.add_router_to_l3_agent(
+                l3_agent[&apos;id&apos;],
+                body={&apos;router_id&apos;: router[&apos;id&apos;]})
+
+        # Destroy node with l3 agent
+        node = self.env.find_node_by_fqdn(l3_agent[&apos;host&apos;])
+        devops_node = DevopsClient.get_node_by_mac(env_name=env_name,
+                                                   mac=node.data[&apos;mac&apos;])
+        if devops_node is not None:
+            devops_node.destroy()
+        else:
+            raise Exception(&quot;Can&apos;t find devops controller node to destroy it&quot;)
+
+        # Wait for l3 agent die
+        wait(
+            lambda: self.os_conn.get_l3_for_router(
+                router[&apos;id&apos;])[&apos;agents&apos;][0][&apos;alive&apos;] is False,
+            expected_exceptions=NeutronClientException,
+            timeout_seconds=60 * 5, sleep_seconds=(1, 60, 5),
+            waiting_for=&quot;L3 agent is died&quot;)
+
+        # Wait for migrating all routers from died L3 agent
+        wait(
+            lambda: len(self.os_conn.neutron.list_routers_on_l3_agent(
+                l3_agent[&apos;id&apos;])[&apos;routers&apos;]) == 0,
+            timeout_seconds=60 * 5, sleep_seconds=(1, 60, 5),
+&gt;           waiting_for=&quot;migrating all routers from died L3 agent&quot;
+        )
+
+mos_tests/neutron/python_tests/test_l3_agent.py:508:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:16: in wait
+    for x in iterwait(result=result, *args, **kwargs):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+predicate = &lt;function &lt;lambda&gt; at 0x7febf8725c80&gt;, timeout_seconds = 300, sleep_seconds = (1, 60, 5), result = &lt;waiting._Result object at 0x7febf805e110&gt;
+waiting_for = &apos;migrating all routers from died L3 agent&apos;, expected_exceptions = ()
+
+    def iterwait(predicate, timeout_seconds=None, sleep_seconds=1, result=None, waiting_for=None,
+                 expected_exceptions=()):
+
+        if not isinstance(expected_exceptions, tuple) and not (isinstance(expected_exceptions, type)
+                                                               and issubclass(expected_exceptions, Exception)):
+            raise IllegalArgumentError(
+                &apos;expected_exceptions should be tuple or Exception subclass&apos;)
+        timeout = _make_deadline(timeout_seconds)
+        if result is None:
+            result = _Result()
+        if waiting_for is None:
+            waiting_for = str(predicate)
+        sleep_generator = _get_sleep_generator(timeout, sleep_seconds)
+        while True:
+            with _end_sleeping(next(sleep_generator)) as cancel_sleep:
+                try:
+                    result.result = predicate()
+                except expected_exceptions:
+                    pass
+                if result.result:
+                    cancel_sleep()
+                    return
+                if timeout.is_expired():
+&gt;                   raise TimeoutExpired(timeout_seconds, waiting_for)
+E                   TimeoutExpired: Timeout of 300 seconds expired waiting for migrating all routers from died L3 agent
+
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:44: TimeoutExpired</failure></testcase><testcase classname="mos_tests.neutron.python_tests.test_l3_ha.TestL3HA" file="mos_tests/neutron/python_tests/test_l3_ha.py" line="177" name="test_ban_l3_agent_with_active_ha_state[once]" time="309.989486217"></testcase><testcase classname="mos_tests.neutron.python_tests.test_l3_ha.TestL3HA" file="mos_tests/neutron/python_tests/test_l3_ha.py" line="177" name="test_ban_l3_agent_with_active_ha_state[twice]" time="387.98857522"></testcase><testcase classname="mos_tests.neutron.python_tests.test_l3_ha.TestL3HA" file="mos_tests/neutron/python_tests/test_l3_ha.py" line="233" name="test_ban_all_l3_agents_and_clear_them" time="294.99000001"></testcase><testcase classname="mos_tests.neutron.python_tests.test_l3_ha.TestL3HA" file="mos_tests/neutron/python_tests/test_l3_ha.py" line="267" name="test_delete_ns_for_active_router" time="302.991547108"></testcase><testcase classname="mos_tests.neutron.python_tests.test_l3_ha.TestL3HA" file="mos_tests/neutron/python_tests/test_l3_ha.py" line="304" name="test_destroy_primary_controller" time="456.991114855"></testcase><testcase classname="mos_tests.neutron.python_tests.test_l3_ha.TestL3HA" file="mos_tests/neutron/python_tests/test_l3_ha.py" line="364" name="test_ban_l3_agent_for_many_routers" time="526.996715069"></testcase><testcase classname="mos_tests.neutron.python_tests.test_l3_ha.TestL3HA" file="mos_tests/neutron/python_tests/test_l3_ha.py" line="437" name="test_ban_active_l3_agent_with_external_connectivity" time="312.989759207"></testcase><testcase classname="mos_tests.neutron.python_tests.test_ovs_restart.TestOVSRestartTwoVms" file="mos_tests/neutron/python_tests/test_ovs_restart.py" line="207" name="test_ovs_restart_pcs_disable_enable[1x][vxlan][l3_ha]" time="307.988479853"></testcase><testcase classname="mos_tests.neutron.python_tests.test_ovs_restart.TestOVSRestartTwoVms" file="mos_tests/neutron/python_tests/test_ovs_restart.py" line="207" name="test_ovs_restart_pcs_disable_enable[40x][vxlan][l3_ha]" time="2977.96855688"></testcase><testcase classname="mos_tests.neutron.python_tests.test_ovs_restart.TestOVSRestartTwoVms" file="mos_tests/neutron/python_tests/test_ovs_restart.py" line="259" name="test_ovs_restart_pcs_ban_clear[vxlan][l3_ha]" time="529.73401618"><failure message="TimeoutExpired: Timeout of 300 seconds expired waiting for &lt;function &lt;lambda&gt; at 0x7febdc3d97d0&gt;">self = &lt;mos_tests.neutron.python_tests.test_ovs_restart.TestOVSRestartTwoVms object at 0x7febdc4f2350&gt;
+
+    def test_ovs_restart_pcs_ban_clear(self):
+        &quot;&quot;&quot;Restart openvswitch-agents with pcs ban/clear on controllers
+
+            Steps:
+                1. Update default security group
+                2. Create router01, create networks.
+                3. Launch vm1 in net01 network and vm2 in net02 network
+                    on different computes.
+                4. Go to vm1 console and send pings to vm2
+                5. Ban ovs-agents on all controllers, clear them and restart
+                    service neutron-plugin-openvswitch-agent on all computes.
+                    To do this, launch the script against master node.
+                6. Wait 30 seconds, send pings from vm1 to vm2 and
+                    check that it is successful.
+
+            Duration 10m
+
+            &quot;&quot;&quot;
+        # Check that all ovs agents are alive
+        self.os_conn.wait_agents_alive(self.ovs_agent_ids)
+
+        # Ban ovs agents on all controllers
+        self.ban_ovs_agents_controllers()
+
+        # Then check that all ovs went down
+&gt;       self.os_conn.wait_agents_down(self.ovs_agent_ids)
+
+mos_tests/neutron/python_tests/test_ovs_restart.py:285:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mos_tests/environment/os_actions.py:617: in wait_agents_down
+    timeout_seconds=5 * 60)
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:16: in wait
+    for x in iterwait(result=result, *args, **kwargs):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+predicate = &lt;function &lt;lambda&gt; at 0x7febdc3d97d0&gt;, timeout_seconds = 300, sleep_seconds = 1, result = &lt;waiting._Result object at 0x7febdc16a210&gt;
+waiting_for = &apos;&lt;function &lt;lambda&gt; at 0x7febdc3d97d0&gt;&apos;, expected_exceptions = ()
+
+    def iterwait(predicate, timeout_seconds=None, sleep_seconds=1, result=None, waiting_for=None,
+                 expected_exceptions=()):
+
+        if not isinstance(expected_exceptions, tuple) and not (isinstance(expected_exceptions, type)
+                                                               and issubclass(expected_exceptions, Exception)):
+            raise IllegalArgumentError(
+                &apos;expected_exceptions should be tuple or Exception subclass&apos;)
+        timeout = _make_deadline(timeout_seconds)
+        if result is None:
+            result = _Result()
+        if waiting_for is None:
+            waiting_for = str(predicate)
+        sleep_generator = _get_sleep_generator(timeout, sleep_seconds)
+        while True:
+            with _end_sleeping(next(sleep_generator)) as cancel_sleep:
+                try:
+                    result.result = predicate()
+                except expected_exceptions:
+                    pass
+                if result.result:
+                    cancel_sleep()
+                    return
+                if timeout.is_expired():
+&gt;                   raise TimeoutExpired(timeout_seconds, waiting_for)
+E                   TimeoutExpired: Timeout of 300 seconds expired waiting for &lt;function &lt;lambda&gt; at 0x7febdc3d97d0&gt;
+
+../fuel-devops-venv/lib/python2.7/site-packages/waiting/__init__.py:44: TimeoutExpired</failure></testcase><testcase classname="mos_tests.neutron.python_tests.test_ovs_restart.TestPortTags" file="mos_tests/neutron/python_tests/test_ovs_restart.py" line="332" name="test_port_tags_immutable" time="53.587515831"><skipped message="Requires: Env deployed with vlan segmentation" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febdc23ffd0&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_ovs_restart.TestOVSRestartsOneNetwork" file="mos_tests/neutron/python_tests/test_ovs_restart.py" line="446" name="test_restart_openvswitch_agent_under_bat[vxlan][l3_ha]" time="229.36438036"></testcase><testcase classname="mos_tests.neutron.python_tests.test_ovs_restart.TestOVSRestartTwoVmsOnSingleCompute" file="mos_tests/neutron/python_tests/test_ovs_restart.py" line="574" name="test_ovs_restart_pcs_vms_on_single_compute_in_single_network[vxlan][l3_ha]" time="249.002037048"></testcase><testcase classname="mos_tests.neutron.python_tests.test_ovs_restart.TestOVSRestartWithIperfTraffic" file="mos_tests/neutron/python_tests/test_ovs_restart.py" line="753" name="test_ovs_restart_with_iperf_traffic[vxlan][l3_ha]" time="60.1989901066"><skipped message="Unable to find QCOW2 ubuntu image with iperf" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/python_tests/test_ovs_restart.py:690: &lt;py._xmlgen.raw object at 0x7febf824ea10&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_ovs_restart.TestOVSRestartAddFlows" file="mos_tests/neutron/python_tests/test_ovs_restart.py" line="864" name="test_ovs_new_flows_added_after_restart[vxlan][l3_ha]" time="193.747953176"></testcase><testcase classname="mos_tests.neutron.python_tests.test_ovs_restart.TestOVSRestartTwoSeparateVms" file="mos_tests/neutron/python_tests/test_ovs_restart.py" line="997" name="test_ovs_restart_pcs_disable_enable_ping_private_vms" time="53.0710661411"><skipped message="Requires: Env deployed with vlan segmentation" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febdc083dd0&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_restarts.TestRestarts" file="mos_tests/neutron/python_tests/test_restarts.py" line="97" name="test_shutdown_primary_controller_with_l3_agt" time="223.860807896"><failure message="assert not [{&apos;admin_state_up&apos;: True, &apos;distributed&apos;: False, &apos;external_gateway_info&apos;: {&apos;enable_snat&apos;: True, &apos;external_fixed_ips&apos;: [...&apos;}], &apos;network_id&apos;: &apos;fcd66f9d-9720-4643-a15c-73fcae040137&apos;}, &apos;gw_port_id&apos;: &apos;d124de7a-46e5-4bf3-9b86-55e5ec5eaaa8&apos;, ...}]">self = &lt;mos_tests.neutron.python_tests.test_restarts.TestRestarts object at 0x7febdc083c50&gt;
+
+    def test_shutdown_primary_controller_with_l3_agt(self):
+        &quot;&quot;&quot;[Neutron VLAN and VXLAN] Shut down primary controller
+               and check l3-agent
+
+            TestRail id is C542612
+            Steps:
+                1. Check on what agents is router1:
+                    neutron l3-agent-list-hosting-router router1
+                2. If there isn&apos;t agent on the primary controller:
+                    neutron l3-agent-router-remove non_on_primary_agent_id router1
+                    neutron l3-agent-router-add on_primary_agent_id router1
+                3. Destroy primary controller
+                    virsh destroy &lt;primary_controller&gt;
+                4. Wait some time until all agents are up
+                    neutron-agent-list
+                5. Check that all routers reschedule from primary controller:
+                    neutron router-list-on-l3-agent &lt;on_primary_agent_id&gt;
+                6. Boot vm3 in network1
+                7. ping 8.8.8.8 from vm3
+                8. ping between vm1 and vm3 by internal ip
+                9. ping between vm1 and vm2 by floating ip
+            &quot;&quot;&quot;
+
+        # Get current L3 agent on router01
+        router_agt = self.os_conn.neutron.list_l3_agent_hosting_routers(
+                        self.router[&apos;id&apos;])[&apos;agents&apos;][0]
+        # Check if the agent is not on the prmary controller
+        # Resceduler if needed
+        if router_agt[&apos;host&apos;] != self.primary_host:
+
+            self.os_conn.reschedule_router_to_primary_host(self.router[&apos;id&apos;],
+                                                      self.primary_host)
+            router_agt = self.os_conn.neutron.list_l3_agent_hosting_routers(
+                            self.router[&apos;id&apos;])[&apos;agents&apos;][0]
+
+        # virsh destroy of the primary controller
+        self.env.destroy_nodes([self.primary_node])
+
+        # Excluding the id of the router_agt from the list
+        # since it will stay on the destroyed controller
+        # and remain disabled
+        self.l3_agent_ids.remove(router_agt[&apos;id&apos;])
+
+        # Then check that the rest l3 agents are alive
+        self.os_conn.wait_agents_alive(self.l3_agent_ids)
+
+        # Check that tere are no routers on the first agent
+&gt;       assert not self.os_conn.neutron.list_routers_on_l3_agent(
+                router_agt[&apos;id&apos;])[&apos;routers&apos;]
+E       assert not [{&apos;admin_state_up&apos;: True, &apos;distributed&apos;: False, &apos;external_gateway_info&apos;: {&apos;enable_snat&apos;: True, &apos;external_fixed_ips&apos;: [...&apos;}], &apos;network_id&apos;: &apos;fcd66f9d-9720-4643-a15c-73fcae040137&apos;}, &apos;gw_port_id&apos;: &apos;d124de7a-46e5-4bf3-9b86-55e5ec5eaaa8&apos;, ...}]
+
+mos_tests/neutron/python_tests/test_restarts.py:145: AssertionError</failure></testcase><testcase classname="mos_tests.neutron.python_tests.test_restarts.TestRestarts" file="mos_tests/neutron/python_tests/test_restarts.py" line="154" name="test_restart_primary_controller_with_l3_agt" time="256.465273857"><failure message="NoValidConnectionsError: [Errno None] Unable to connect to port 22 on  or 10.109.0.5">self = &lt;mos_tests.neutron.python_tests.test_restarts.TestRestarts object at 0x7febb86bdd90&gt;
+
+    def test_restart_primary_controller_with_l3_agt(self):
+        &quot;&quot;&quot;[Neutron VLAN and VXLAN] Reset primary controller and check l3-agent
+
+            TestRail id is C542611
+            Steps:
+                1. Check on what agents is router1:
+                    neutron l3-agent-list-hosting-router router1
+                2. If there isn&apos;t agent on the primary controller:
+                    neutron l3-agent-router-remove non_on_primary_agent_id router1
+                    neutron l3-agent-router-add on_primary_agent_id router1
+                3. Restart primary controller
+                4. Wait some time until all agents are up
+                    neutron-agent-list
+                5. Check that all routers reschedule from primary controller:
+                    neutron router-list-on-l3-agent &lt;on_primary_agent_id&gt;
+                6. Boot vm3 in network1
+                7. ping 8.8.8.8 from vm3
+                8. ping between vm1 and vm3 by internal ip
+                9. ping between vm1 and vm2 by floating ip
+            &quot;&quot;&quot;
+
+        # Get current L3 agent on router01
+        router_agt = self.os_conn.neutron.list_l3_agent_hosting_routers(
+                        self.router[&apos;id&apos;])[&apos;agents&apos;][0]
+        # Check if the agent is not on the prmary controller
+        # Resceduler if needed
+        if router_agt[&apos;host&apos;] != self.primary_host:
+            self.os_conn.reschedule_router_to_primary_host(self.router[&apos;id&apos;],
+                                                      self.primary_host)
+            router_agt = self.os_conn.neutron.list_l3_agent_hosting_routers(
+                            self.router[&apos;id&apos;])[&apos;agents&apos;][0]
+
+        # virsh destroy of the primary controller
+&gt;       self.env.warm_restart_nodes([self.primary_node])
+
+mos_tests/neutron/python_tests/test_restarts.py:188:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mos_tests/environment/fuel_client.py:212: in warm_restart_nodes
+    self.warm_shutdown_nodes(devops_nodes)
+mos_tests/environment/fuel_client.py:195: in warm_shutdown_nodes
+    with self.get_ssh_to_node(node_ip) as remote:
+mos_tests/environment/fuel_client.py:84: in get_ssh_to_node
+    private_keys=self.admin_ssh_keys
+mos_tests/environment/ssh.py:78: in __init__
+    self.reconnect()
+mos_tests/environment/ssh.py:126: in reconnect
+    self.connect()
+mos_tests/environment/ssh.py:115: in connect
+    return self._ssh.connect(self.host, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;paramiko.client.SSHClient object at 0x7febb86bdbd0&gt;, hostname = &apos;10.109.0.5&apos;, port = 22, username = &apos;root&apos;, password = None
+pkey = &lt;paramiko.rsakey.RSAKey object at 0x7febb85cb450&gt;, key_filename = None, timeout = None, allow_agent = True, look_for_keys = True, compress = False
+sock = &lt;socket._socketobject object at 0x7febdc7612f0&gt;, gss_auth = False, gss_kex = False, gss_deleg_creds = True, gss_host = None, banner_timeout = None
+
+    def connect(
+        self,
+        hostname,
+        port=SSH_PORT,
+        username=None,
+        password=None,
+        pkey=None,
+        key_filename=None,
+        timeout=None,
+        allow_agent=True,
+        look_for_keys=True,
+        compress=False,
+        sock=None,
+        gss_auth=False,
+        gss_kex=False,
+        gss_deleg_creds=True,
+        gss_host=None,
+        banner_timeout=None
+    ):
+        &quot;&quot;&quot;
+            Connect to an SSH server and authenticate to it.  The server&apos;s host key
+            is checked against the system host keys (see `load_system_host_keys`)
+            and any local host keys (`load_host_keys`).  If the server&apos;s hostname
+            is not found in either set of host keys, the missing host key policy
+            is used (see `set_missing_host_key_policy`).  The default policy is
+            to reject the key and raise an `.SSHException`.
+
+            Authentication is attempted in the following order of priority:
+
+                - The ``pkey`` or ``key_filename`` passed in (if any)
+                - Any key we can find through an SSH agent
+                - Any &quot;id_rsa&quot;, &quot;id_dsa&quot; or &quot;id_ecdsa&quot; key discoverable in
+                  ``~/.ssh/``
+                - Plain username/password auth, if a password was given
+
+            If a private key requires a password to unlock it, and a password is
+            passed in, that password will be used to attempt to unlock the key.
+
+            :param str hostname: the server to connect to
+            :param int port: the server port to connect to
+            :param str username:
+                the username to authenticate as (defaults to the current local
+                username)
+            :param str password:
+                a password to use for authentication or for unlocking a private key
+            :param .PKey pkey: an optional private key to use for authentication
+            :param str key_filename:
+                the filename, or list of filenames, of optional private key(s) to
+                try for authentication
+            :param float timeout:
+                an optional timeout (in seconds) for the TCP connect
+            :param bool allow_agent:
+                set to False to disable connecting to the SSH agent
+            :param bool look_for_keys:
+                set to False to disable searching for discoverable private key
+                files in ``~/.ssh/``
+            :param bool compress: set to True to turn on compression
+            :param socket sock:
+                an open socket or socket-like object (such as a `.Channel`) to use
+                for communication to the target host
+            :param bool gss_auth:
+                ``True`` if you want to use GSS-API authentication
+            :param bool gss_kex:
+                Perform GSS-API Key Exchange and user authentication
+            :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
+            :param str gss_host:
+                The targets name in the kerberos database. default: hostname
+            :param float banner_timeout: an optional timeout (in seconds) to wait
+                for the SSH banner to be presented.
+
+            :raises BadHostKeyException: if the server&apos;s host key could not be
+                verified
+            :raises AuthenticationException: if authentication failed
+            :raises SSHException: if there was any other error connecting or
+                establishing an SSH session
+            :raises socket.error: if a socket error occurred while connecting
+
+            .. versionchanged:: 1.15
+                Added the ``banner_timeout``, ``gss_auth``, ``gss_kex``,
+                ``gss_deleg_creds`` and ``gss_host`` arguments.
+            &quot;&quot;&quot;
+        if not sock:
+            errors = {}
+            # Try multiple possible address families (e.g. IPv4 vs IPv6)
+            to_try = list(self._families_and_addresses(hostname, port))
+            for af, addr in to_try:
+                try:
+                    sock = socket.socket(af, socket.SOCK_STREAM)
+                    if timeout is not None:
+                        try:
+                            sock.settimeout(timeout)
+                        except:
+                            pass
+                    retry_on_signal(lambda: sock.connect(addr))
+                    # Break out of the loop on success
+                    break
+                except socket.error as e:
+                    # Raise anything that isn&apos;t a straight up connection error
+                    # (such as a resolution error)
+                    if e.errno not in (ECONNREFUSED, EHOSTUNREACH):
+                        raise
+                    # Capture anything else so we know how the run looks once
+                    # iteration is complete. Retain info about which attempt
+                    # this was.
+                    errors[addr] = e
+
+            # Make sure we explode usefully if no address family attempts
+            # succeeded. We&apos;ve no way of knowing which error is the &quot;right&quot;
+            # one, so we construct a hybrid exception containing all the real
+            # ones, of a subclass that client code should still be watching for
+            # (socket.error)
+            if len(errors) == len(to_try):
+&gt;               raise NoValidConnectionsError(errors)
+E               NoValidConnectionsError: [Errno None] Unable to connect to port 22 on  or 10.109.0.5
+
+../fuel-devops-venv/lib/python2.7/site-packages/paramiko/client.py:311: NoValidConnectionsError</failure></testcase><testcase classname="mos_tests.neutron.python_tests.test_restarts.TestRestarts" file="mos_tests/neutron/python_tests/test_restarts.py" line="203" name="test_kill_active_l3_agt" time="306.995512962"></testcase><testcase classname="mos_tests.neutron.python_tests.test_restarts.TestRestarts" file="mos_tests/neutron/python_tests/test_restarts.py" line="254" name="test_shutdown_primary_controller_dhcp_agent" time="539.98274684"></testcase><testcase classname="mos_tests.neutron.python_tests.test_restarts.TestRestarts" file="mos_tests/neutron/python_tests/test_restarts.py" line="304" name="test_reset_primary_controller_dhcp_agent" time="254.47400403"><failure message="NoValidConnectionsError: [Errno None] Unable to connect to port 22 on  or 10.109.0.5">self = &lt;mos_tests.neutron.python_tests.test_restarts.TestRestarts object at 0x7febb853dc10&gt;
+
+    def test_reset_primary_controller_dhcp_agent(self):
+        &quot;&quot;&quot;Reset primary controller and check dhcp-agent
+
+            Scenario:
+                2. Create network1, subnet1, router1
+                3. Launch instances vm1 in network1
+                4. Find primary controller
+                5. Check on what agents is network1
+                6. Run udhcp on vm1
+                7. Reset primary controller
+                8. Check that all networks reschedule from primary controller
+                9. Run udhcp on vm1
+
+            Duration 10m
+
+            &quot;&quot;&quot;
+        agents_hosts = self.os_conn.get_node_with_dhcp_for_network(
+            self.networks[0])
+
+        # Check if the agent is not on the primary controller
+        # Reschedule if needed
+        if not any(self.primary_host in host for host in agents_hosts):
+            self.os_conn.reschedule_dhcp_agent(self.networks[0],
+                                               self.primary_host)
+
+        # Get primary controller agent id
+        agent_ids = [agt[&apos;id&apos;] for agt in self.os_conn.neutron.list_agents(
+            binary=&apos;neutron-dhcp-agent&apos;)[&apos;agents&apos;]
+            if self.primary_host in agt[&apos;host&apos;]]
+
+        # Run udhcp on vm
+        self.run_udhcpc_on_vm(self.server1)
+
+        # Reset primary controller
+&gt;       self.env.warm_restart_nodes([self.primary_node])
+
+mos_tests/neutron/python_tests/test_restarts.py:339:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mos_tests/environment/fuel_client.py:212: in warm_restart_nodes
+    self.warm_shutdown_nodes(devops_nodes)
+mos_tests/environment/fuel_client.py:195: in warm_shutdown_nodes
+    with self.get_ssh_to_node(node_ip) as remote:
+mos_tests/environment/fuel_client.py:84: in get_ssh_to_node
+    private_keys=self.admin_ssh_keys
+mos_tests/environment/ssh.py:78: in __init__
+    self.reconnect()
+mos_tests/environment/ssh.py:126: in reconnect
+    self.connect()
+mos_tests/environment/ssh.py:115: in connect
+    return self._ssh.connect(self.host, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;paramiko.client.SSHClient object at 0x7febb853de90&gt;, hostname = &apos;10.109.0.5&apos;, port = 22, username = &apos;root&apos;, password = None
+pkey = &lt;paramiko.rsakey.RSAKey object at 0x7febb866af90&gt;, key_filename = None, timeout = None, allow_agent = True, look_for_keys = True, compress = False
+sock = &lt;socket._socketobject object at 0x7febfb73bf30&gt;, gss_auth = False, gss_kex = False, gss_deleg_creds = True, gss_host = None, banner_timeout = None
+
+    def connect(
+        self,
+        hostname,
+        port=SSH_PORT,
+        username=None,
+        password=None,
+        pkey=None,
+        key_filename=None,
+        timeout=None,
+        allow_agent=True,
+        look_for_keys=True,
+        compress=False,
+        sock=None,
+        gss_auth=False,
+        gss_kex=False,
+        gss_deleg_creds=True,
+        gss_host=None,
+        banner_timeout=None
+    ):
+        &quot;&quot;&quot;
+            Connect to an SSH server and authenticate to it.  The server&apos;s host key
+            is checked against the system host keys (see `load_system_host_keys`)
+            and any local host keys (`load_host_keys`).  If the server&apos;s hostname
+            is not found in either set of host keys, the missing host key policy
+            is used (see `set_missing_host_key_policy`).  The default policy is
+            to reject the key and raise an `.SSHException`.
+
+            Authentication is attempted in the following order of priority:
+
+                - The ``pkey`` or ``key_filename`` passed in (if any)
+                - Any key we can find through an SSH agent
+                - Any &quot;id_rsa&quot;, &quot;id_dsa&quot; or &quot;id_ecdsa&quot; key discoverable in
+                  ``~/.ssh/``
+                - Plain username/password auth, if a password was given
+
+            If a private key requires a password to unlock it, and a password is
+            passed in, that password will be used to attempt to unlock the key.
+
+            :param str hostname: the server to connect to
+            :param int port: the server port to connect to
+            :param str username:
+                the username to authenticate as (defaults to the current local
+                username)
+            :param str password:
+                a password to use for authentication or for unlocking a private key
+            :param .PKey pkey: an optional private key to use for authentication
+            :param str key_filename:
+                the filename, or list of filenames, of optional private key(s) to
+                try for authentication
+            :param float timeout:
+                an optional timeout (in seconds) for the TCP connect
+            :param bool allow_agent:
+                set to False to disable connecting to the SSH agent
+            :param bool look_for_keys:
+                set to False to disable searching for discoverable private key
+                files in ``~/.ssh/``
+            :param bool compress: set to True to turn on compression
+            :param socket sock:
+                an open socket or socket-like object (such as a `.Channel`) to use
+                for communication to the target host
+            :param bool gss_auth:
+                ``True`` if you want to use GSS-API authentication
+            :param bool gss_kex:
+                Perform GSS-API Key Exchange and user authentication
+            :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
+            :param str gss_host:
+                The targets name in the kerberos database. default: hostname
+            :param float banner_timeout: an optional timeout (in seconds) to wait
+                for the SSH banner to be presented.
+
+            :raises BadHostKeyException: if the server&apos;s host key could not be
+                verified
+            :raises AuthenticationException: if authentication failed
+            :raises SSHException: if there was any other error connecting or
+                establishing an SSH session
+            :raises socket.error: if a socket error occurred while connecting
+
+            .. versionchanged:: 1.15
+                Added the ``banner_timeout``, ``gss_auth``, ``gss_kex``,
+                ``gss_deleg_creds`` and ``gss_host`` arguments.
+            &quot;&quot;&quot;
+        if not sock:
+            errors = {}
+            # Try multiple possible address families (e.g. IPv4 vs IPv6)
+            to_try = list(self._families_and_addresses(hostname, port))
+            for af, addr in to_try:
+                try:
+                    sock = socket.socket(af, socket.SOCK_STREAM)
+                    if timeout is not None:
+                        try:
+                            sock.settimeout(timeout)
+                        except:
+                            pass
+                    retry_on_signal(lambda: sock.connect(addr))
+                    # Break out of the loop on success
+                    break
+                except socket.error as e:
+                    # Raise anything that isn&apos;t a straight up connection error
+                    # (such as a resolution error)
+                    if e.errno not in (ECONNREFUSED, EHOSTUNREACH):
+                        raise
+                    # Capture anything else so we know how the run looks once
+                    # iteration is complete. Retain info about which attempt
+                    # this was.
+                    errors[addr] = e
+
+            # Make sure we explode usefully if no address family attempts
+            # succeeded. We&apos;ve no way of knowing which error is the &quot;right&quot;
+            # one, so we construct a hybrid exception containing all the real
+            # ones, of a subclass that client code should still be watching for
+            # (socket.error)
+            if len(errors) == len(to_try):
+&gt;               raise NoValidConnectionsError(errors)
+E               NoValidConnectionsError: [Errno None] Unable to connect to port 22 on  or 10.109.0.5
+
+../fuel-devops-venv/lib/python2.7/site-packages/paramiko/client.py:311: NoValidConnectionsError</failure></testcase><testcase classname="mos_tests.neutron.python_tests.test_restarts.TestRestarts" file="mos_tests/neutron/python_tests/test_restarts.py" line="354" name="test_shutdown_non_primary_controller_dhcp_agent" time="447.954843998"></testcase><testcase classname="mos_tests.neutron.python_tests.test_vxlan.TestVxlan" file="mos_tests/neutron/python_tests/test_vxlan.py" line="143" name="test_tunnel_established" time="188.987241983"></testcase><testcase classname="mos_tests.neutron.python_tests.test_vxlan.TestVxlan" file="mos_tests/neutron/python_tests/test_vxlan.py" line="205" name="test_vni_for_icmp_between_instances" time="246.991605759"></testcase><testcase classname="mos_tests.neutron.python_tests.test_vxlan.TestVxlanL2pop" file="mos_tests/neutron/python_tests/test_vxlan.py" line="290" name="test_broadcast_traffic_propagation[filter by vxlan port]" time="54.5738022327"><skipped message="Requires: Env deployed with vxlan segmentation and l2 population" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febb825fc10&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_vxlan.TestVxlanL2pop" file="mos_tests/neutron/python_tests/test_vxlan.py" line="290" name="test_broadcast_traffic_propagation[filter by source_ip]" time="1.64515399933"><skipped message="Requires: Env deployed with vxlan segmentation and l2 population" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febb84bd710&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_vxlan.TestVxlanL2pop" file="mos_tests/neutron/python_tests/test_vxlan.py" line="373" name="test_establishing_tunnels_between_computes" time="0.935429096222"><skipped message="Requires: Env deployed with 3 or more computes" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febb852ce90&gt;</skipped></testcase><testcase classname="mos_tests.neutron.python_tests.test_vxlan.TestVxlanL2pop" file="mos_tests/neutron/python_tests/test_vxlan.py" line="499" name="test_broadcast_traffic_propagation_single_net" time="1.68133616447"><skipped message="Requires: Env deployed with vxlan segmentation and l2 population" type="pytest.skip">/home/gdyuldin/mos-integration-tests/mos_tests/neutron/conftest.py:100: &lt;py._xmlgen.raw object at 0x7febb8590b10&gt;</skipped></testcase></testsuite>

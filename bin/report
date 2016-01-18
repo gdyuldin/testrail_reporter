@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+
+import os
+import argparse
+import logging
+
+from reporter import Reporter
+
+
+def filename(string):
+    if not os.path.exists(string):
+        msg = "%r is not exists" % string
+        raise argparse.ArgumentTypeError(msg)
+    if not os.path.isfile(string):
+        msg = "%r is not a file" % string
+        raise argparse.ArgumentTypeError(msg)
+    return string
+
+
+def main():
+    defaults = {
+        'TESTRAIL_URL': 'https://mirantis.testrail.com',
+        'TESTRAIL_USER': 'user@example.com',
+        'TESTRAIL_PASSWORD': 'password',
+        'TESTRAIL_PROJECT': 'Mirantis OpenStack',
+        'TESTRAIL_MILESTONE': '9.0',
+        'TESTRAIL_TEST_SUITE': '[{0.testrail_milestone}] MOSQA',
+        'XUNIT_REPORT': 'report.xml',
+        'OPERATION_SYSTEM': 'Ubuntu 14.04',
+        'ISO_LINK': 'http://test',
+        'ISO_ID': '000',
+    }
+    defaults = {k: os.environ.get(k, v) for k, v in defaults.items()}
+
+    parser = argparse.ArgumentParser(description='Report to testrail')
+    parser.add_argument('xunit_report', type=filename,
+                        default=defaults['XUNIT_REPORT'],
+                        help='xUnit report XML file')
+    parser.add_argument('--iso_link', type=str,
+                        default=defaults['ISO_LINK'],
+                        help='link to iso')
+    parser.add_argument('--operation_system', type=str,
+                        default=defaults['OPERATION_SYSTEM'],
+                        help='deployed OpenStack operation system')
+    parser.add_argument('--iso_id', type=int,
+                        default=defaults['ISO_ID'],
+                        help='id of build Fuel iso')
+    parser.add_argument('--testrail-url', type=str,
+                        default=defaults['TESTRAIL_URL'],
+                        help='base url of testrail')
+    parser.add_argument('--testrail-user', type=str,
+                        default=defaults['TESTRAIL_USER'],
+                        help='testrail user')
+    parser.add_argument('--testrail-password', type=str,
+                        default=defaults['TESTRAIL_PASSWORD'],
+                        help='testrail password')
+    parser.add_argument('--testrail-project', type=str,
+                        default=defaults['TESTRAIL_PROJECT'],
+                        help='testrail project name')
+    parser.add_argument('--testrail-milestone', type=str,
+                        default=defaults['TESTRAIL_MILESTONE'],
+                        help='testrail project milestone')
+    parser.add_argument('--testrail-suite', type=str,
+                        default=defaults['TESTRAIL_TEST_SUITE'],
+                        help='testrail project suite name')
+
+    parser.add_argument('--verbose', '-v', action='store_true',
+                        default=False,
+                        help='Verbose mode')
+
+    args = parser.parse_args()
+
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+
+    reporter = Reporter(
+        iso_link=args.iso_link,
+        xunit_report=args.xunit_report,
+        operation_system=args.operation_system,
+        iso_id=args.iso_id,
+    )
+    suite = args.testrail_suite.format(args)
+    reporter.config_testrail(
+        base_url=args.testrail_url,
+        username=args.testrail_user,
+        password=args.testrail_password,
+        milestone=args.testrail_milestone,
+        project=args.testrail_project,
+        tests_suite=suite)
+    reporter.execute()
+
+
+if __name__ == '__main__':
+    main()
