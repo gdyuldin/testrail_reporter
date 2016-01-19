@@ -362,9 +362,9 @@ def test_add_result(client, run):
     httpretty.register_uri(
         httpretty.POST,
         re.compile(base + r'add_result/.*'),
-        body=json.dumps([{'id': 5, 'status_id': 4}]),
+        body=json.dumps({'id': 5, 'status_id': 4}),
         match_querystring=True)
-    plans = run.results.add(status_id=1, comment="test result comment")
+    result = run.results.add(status_id=1, comment="test result comment")
     expected = {
         "assignedto_id": None,
         "comment": "test result comment",
@@ -373,11 +373,10 @@ def test_add_result(client, run):
         "status_id": 1,
         "version": None,
     }
-    result = json.loads(httpretty.last_request().body)
-    assert expected == result
-    assert type(plans) is list
-    assert type(plans[0]) is Result
-    assert plans[0].id == 5
+    request = json.loads(httpretty.last_request().body)
+    assert request == expected
+    assert type(result) is Result
+    assert result.id == 5
 
 
 def test_add_result_to_case():

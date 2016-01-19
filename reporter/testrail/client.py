@@ -28,7 +28,6 @@ class ItemSet(list):
 class Collection(object):
 
     list_url = 'get_{name}s'
-    get_url = 'get_{name}/{id}'
     add_url = 'add_{name}'
 
     def __init__(self, item_class=None, parent_id=None, **kwargs):
@@ -48,7 +47,7 @@ class Collection(object):
             return items
 
         else:
-            return self.get(id)
+            return self._item_class.get(id)
 
     def __repr__(self):
         return '<Collection of {}>'.format(self._item_class.__name__)
@@ -63,10 +62,6 @@ class Collection(object):
             url += '/{}'.format(self.parent_id)
         return self._handler('GET', url, params=params)
 
-    def _get(self, name, item_id, **kwargs):
-        url = self.get_url.format(name=name, id=item_id)
-        return self._handler('GET', url, params=kwargs)
-
     def _add(self, name, data, **kwargs):
         url = self.add_url.format(name=name)
         if self.parent_id is not None:
@@ -80,22 +75,16 @@ class Collection(object):
         return self().find(**kwargs)
 
     def get(self, id):
-        name = self._item_class._api_name()
-        item = self._get(name, id)
-        if 'error' in item:
-            raise Exception(item)
-        return self._to_object(item)
+        return self._item_class.get(id)
 
     def add(self, **kwargs):
         item = self._to_object(kwargs)
         result = self._add(item._api_name(), item.data)
-        if isinstance(result, (tuple, list)):
-            return [self._to_object(x) for x in result]
-        else:
-            return self._to_object(result)
+        return self._to_object(result)
 
 
 class Item(object):
+    get_url = 'get_{name}/{id}'
     update_url = 'update_{name}/{id}'
     _handler = None
     repr_field = 'name'
@@ -109,7 +98,16 @@ class Item(object):
         return cls.__name__.lower()
 
     def __getattr__(self, name):
-        return self._data[name]
+        if name in self._data:
+            return self._data[name]
+        else:
+            raise AttributeError
+
+    def __setattr__(self, name, value):
+        if '_data' in self.__dict__ and name not in self.__dict__:
+            self.__dict__['_data'][name] = value
+        else:
+            self.__dict__[name] = value
 
     def __repr__(self):
         name = getattr(self, self.repr_field, '')
@@ -117,9 +115,18 @@ class Item(object):
         return '<{c.__name__}({s.id}) {name} at 0x{id:x}>'.format(
             s=self, c=self.__class__, id=id(self), name=name)
 
-    def update(self, name, item_id, data, **kwargs):
+    @classmethod
+    def get(cls, id):
+        name = cls._api_name()
+        url = cls.get_url.format(name=name, id=id)
+        result = cls._handler('GET', url)
+        if 'error' in result:
+            raise Exception(result)
+        return cls(**result)
+
+    def update(self):
         url = self.update_url.format(name=self._api_name(), id=self.id)
-        return self._handler('POST', url, json=data, **kwargs)
+        self._handler('POST', url, json=self.data)
 
     @property
     def data(self):
@@ -234,10 +241,7 @@ class ResultCollection(Collection):
             results.append(result)
         url = 'add_results_for_cases/{}'.format(run_id)
         result = self._handler('POST', url, json={'results': results})
-        if isinstance(result, (tuple, list)):
-            return [self._to_object(x) for x in result]
-        else:
-            return self._to_object(result)
+        return [self._to_object(x) for x in result]
 
 
 class Result(Item):
@@ -279,10 +283,17 @@ class Client(object):
         kwargs['auth'] = (self.username, self.password)
         kwargs['headers'] = {'Content-type': 'application/json'}
         logger.debug('Make {} request to {}'.format(method, url))
-        result = requests.request(
-            method, url, **kwargs).json()
+        response = requests.request(
+            method, url, allow_redirects=False, **kwargs)
+        if response.status_code >= 300:
+            raise Exception(
+                "Wrong response:\n"
+                "status_code: {0.status_code}\n"
+                "headers: {0.headers}\n"
+                "content: '{0.content}'".format(response))
+        result = response.json()
         if 'error' in result:
-            logging.warning(result)
+            logger.warning(result)
         return result
 
     @property
