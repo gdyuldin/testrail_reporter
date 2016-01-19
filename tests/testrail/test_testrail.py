@@ -194,6 +194,11 @@ def test_project(client, project):
     assert fetched_project.id == project.id
 
 
+def test_get_project(client, project):
+    fetched_project = client.projects.get(project.id)
+    assert fetched_project.id == project.id
+
+
 def test_suites(project):
     suites = project.suites()
     assert isinstance(suites, list)

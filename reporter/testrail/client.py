@@ -15,7 +15,7 @@ class ItemSet(list):
 
     def find_all(self, **kwargs):
         filtered = ItemSet(x for x in self if
-                           all(x.data[k] == v for k, v in kwargs.items()))
+                           all(getattr(x, k) == v for k, v in kwargs.items()))
         filtered._item_class = self._item_class
         return filtered
 
@@ -38,8 +38,8 @@ class Collection(object):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-    def __call__(self, id=None, **kwargs):
-        name = self._item_class._name()
+    def __call__(self, id=None):
+        name = self._item_class._api_name()
         if id is None:
             items = self._list(name)
             if 'error' in items:
@@ -48,10 +48,7 @@ class Collection(object):
             return items
 
         else:
-            item = self._get(name, id)
-            if 'error' in item:
-                raise Exception(item)
-            return self._to_object(item)
+            return self.get(id)
 
     def __repr__(self):
         return '<Collection of {}>'.format(self._item_class.__name__)
@@ -82,9 +79,16 @@ class Collection(object):
     def find(self, **kwargs):
         return self().find(**kwargs)
 
+    def get(self, id):
+        name = self._item_class._api_name()
+        item = self._get(name, id)
+        if 'error' in item:
+            raise Exception(item)
+        return self._to_object(item)
+
     def add(self, **kwargs):
         item = self._to_object(kwargs)
-        result = self._add(item._name(), item.data)
+        result = self._add(item._api_name(), item.data)
         if isinstance(result, (tuple, list)):
             return [self._to_object(x) for x in result]
         else:
@@ -94,20 +98,27 @@ class Collection(object):
 class Item(object):
     update_url = 'update_{name}/{id}'
     _handler = None
+    repr_field = 'name'
 
     def __init__(self, id=None, **kwargs):
         self.id = id
         self._data = kwargs
 
     @classmethod
-    def _name(cls):
+    def _api_name(cls):
         return cls.__name__.lower()
 
     def __getattr__(self, name):
         return self._data[name]
 
+    def __repr__(self):
+        name = getattr(self, self.repr_field, '')
+        name = repr(name)
+        return '<{c.__name__}({s.id}) {name} at 0x{id:x}>'.format(
+            s=self, c=self.__class__, id=id(self), name=name)
+
     def update(self, name, item_id, data, **kwargs):
-        url = self.update_url.format(name=self._name(), id=self.id)
+        url = self.update_url.format(name=self._api_name(), id=self.id)
         return self._handler('POST', url, json=data, **kwargs)
 
     @property
@@ -145,6 +156,8 @@ class Suite(Item):
 
 
 class Case(Item):
+    repr_field = 'title'
+
     def __init__(self, *args, **kwargs):
         super(Case, self).__init__(*args, **kwargs)
         self.result = None
