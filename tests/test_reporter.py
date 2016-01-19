@@ -6,7 +6,7 @@ from reporter import Reporter
 def reporter():
     return Reporter(iso_link="http://iso_link",
                     xunit_report='tests/xunit_files/report.xml',
-                    operation_system='ubuntu',
+                    env_description='vlan_ceph',
                     iso_id=385)
 
 

@@ -24,14 +24,14 @@ def memoize(f):
 
 class Reporter(object):
 
-    def __init__(self, iso_link, xunit_report, operation_system, iso_id,
-                 *args, **kwargs):
+    def __init__(self, xunit_report, iso_link, iso_id, env_description, *args,
+                 **kwargs):
         self._config = {}
         self._cache = {}
         self.iso_link = iso_link
         self.iso_id = iso_id
         self.xunit_report = xunit_report
-        self.operation_system = operation_system
+        self.env_description = env_description
         super(Reporter, self).__init__(*args, **kwargs)
 
     def config_testrail(self, base_url, username, password, milestone, project,
@@ -117,7 +117,9 @@ class Reporter(object):
             return
         status_id = status_ids[0]
         comment = xunit_case.message
-        elasped = "{:.0f}s".format(xunit_case.time.total_seconds())
+        elasped = int(xunit_case.time.total_seconds())
+        if elasped > 0:
+            elasped = "{}s".format(elasped)
         testrail_case.add_result(
             status_id=status_id,
             elapsed=elasped,
@@ -144,18 +146,16 @@ class Reporter(object):
         return cases
 
     def create_test_run(self, plan, cases):
-        suite_name = self.suite.name
+        suite_name = "{} ({})".format(self.suite.name, self.env_description)
         description = ('Results of system tests ({tests_suite}) on iso '
                        '#{iso_number}').format(tests_suite=suite_name,
                                                iso_number=self.iso_id)
-        config_ids = [x['id'] for x in self.os_config.configs
-                      if x['name'] == self.operation_system]
         run = Run(
             name=suite_name,
             description=description,
             suite_id=self.suite.id,
             milestone_id=self.milestone.id,
-            config_ids=config_ids,
+            config_ids=[],
             case_ids=[x.id for x in cases],
         )
         plan.add_run(run)
@@ -164,6 +164,9 @@ class Reporter(object):
     def execute(self):
         xunit_suite, _ = self.get_xunit_test_suite()
         cases = self.find_testrail_cases(xunit_suite)
+        if len(cases) == 0:
+            logger.warning('No cases matched, programm will terminated')
+            return
         plan = self.get_or_create_plan()
         test_run = self.create_test_run(plan, cases)
         test_run.add_results_for_cases(cases)

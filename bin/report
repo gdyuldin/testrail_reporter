@@ -29,6 +29,7 @@ def main():
         'OPERATION_SYSTEM': 'Ubuntu 14.04',
         'ISO_LINK': 'http://test',
         'ISO_ID': '000',
+        'ENV_DESCRIPTION': '',
     }
     defaults = {k: os.environ.get(k, v) for k, v in defaults.items()}
 
@@ -36,13 +37,13 @@ def main():
     parser.add_argument('xunit_report', type=filename,
                         default=defaults['XUNIT_REPORT'],
                         help='xUnit report XML file')
-    parser.add_argument('--iso_link', type=str,
+    parser.add_argument('--iso-link', type=str,
                         default=defaults['ISO_LINK'],
                         help='link to iso')
-    parser.add_argument('--operation_system', type=str,
-                        default=defaults['OPERATION_SYSTEM'],
-                        help='deployed OpenStack operation system')
-    parser.add_argument('--iso_id', type=int,
+    parser.add_argument('--env-description', type=str,
+                        default=defaults['ENV_DESCRIPTION'],
+                        help='env deploy type description (for TestRun name)')
+    parser.add_argument('--iso-id', type=int,
                         default=defaults['ISO_ID'],
                         help='id of build Fuel iso')
     parser.add_argument('--testrail-url', type=str,
@@ -74,10 +75,10 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
 
     reporter = Reporter(
-        iso_link=args.iso_link,
         xunit_report=args.xunit_report,
-        operation_system=args.operation_system,
+        iso_link=args.iso_link,
         iso_id=args.iso_id,
+        env_description=args.env_description,
     )
     suite = args.testrail_suite.format(args)
     reporter.config_testrail(

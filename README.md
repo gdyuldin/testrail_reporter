@@ -1,8 +1,8 @@
 # TestRail xUnit Reporter
 
 ```
-usage: report [-h] [--iso_link ISO_LINK] [--operation_system OPERATION_SYSTEM]
-              [--iso_id ISO_ID] [--testrail-url TESTRAIL_URL]
+usage: report [-h] [--iso-link ISO_LINK] [--env-description ENV_DESCRIPTION]
+              [--iso-id ISO_ID] [--testrail-url TESTRAIL_URL]
               [--testrail-user TESTRAIL_USER]
               [--testrail-password TESTRAIL_PASSWORD]
               [--testrail-project TESTRAIL_PROJECT]
@@ -17,10 +17,10 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --iso_link ISO_LINK   link to iso
-  --operation_system OPERATION_SYSTEM
-                        deployed OpenStack operation system
-  --iso_id ISO_ID       id of build Fuel iso
+  --iso-link ISO_LINK   link to iso
+  --env-description ENV_DESCRIPTION
+                        env deploy type description (for TestRun name)
+  --iso-id ISO_ID       id of build Fuel iso
   --testrail-url TESTRAIL_URL
                         base url of testrail
   --testrail-user TESTRAIL_USER
