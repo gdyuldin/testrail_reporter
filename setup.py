@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='testrail_reporter',
@@ -8,7 +8,7 @@ setup(
     description='Report test results from xUnit xml file to TestRail',
     author='Georgy Dyuldin',
     author_email='gdyuldin@mirantis.com',
-    packages=['reporter'],
+    packages=find_packages(),
     scripts=['bin/report'],
     url="https://github.com/gdyuldin/testrail_reporter",
     setup_requires=[
