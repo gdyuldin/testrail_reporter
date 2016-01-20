@@ -107,6 +107,8 @@ class Reporter(object):
             status_name = 'failed'
         elif xunit_case.skipped:
             status_name = 'skipped'
+        elif xunit_case.errored:
+            status_name = 'blocked'
         else:
             return
         status_ids = [k for k, v in self.testrail_statuses.items()
