@@ -336,13 +336,15 @@ def test_add_run_to_plan(client, plan):
         body=json.dumps({'runs': [{'id': 8}]}),
         match_querystring=True)
 
-    run = Run(suite_id=14, milestone_id=15, name="test_run", case_ids=[1, 2],
-        config_ids=[16])
+    run = Run(suite_id=14, milestone_id=15, name="test_run",
+        description="test description", case_ids=[1, 2], config_ids=[16])
     plan.add_run(run)
     expected = {
         "suite_id": 14,
         "name": "test_run",
-        "include_all": True,
+        "description": "test description",
+        "include_all": False,
+        "case_ids": [1, 2],
         "config_ids": [16],
         "runs": [
             {

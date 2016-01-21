@@ -192,8 +192,10 @@ class Plan(Item):
         request = {
             "suite_id": run.suite_id,
             "name": run.name,
+            "description": run.description,
             "config_ids": run.config_ids,
-            'include_all': run.include_all,
+            "include_all": run.include_all,
+            "case_ids": run.data['case_ids'],
             "runs": [run_data],
         }
         result = self._handler('POST', url, json=request)
@@ -202,7 +204,7 @@ class Plan(Item):
 
 class Run(Item):
     def __init__(self, suite_id, milestone_id, config_ids=(), name="",
-                 description="", include_all=True, case_ids=(),
+                 description="", include_all=False, case_ids=(),
                  assignedto_id=None, id=None, **kwargs):
         add_kwargs = locals()
         add_kwargs.pop('self')
