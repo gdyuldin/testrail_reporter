@@ -1,5 +1,7 @@
 # TestRail xUnit Reporter
 
+[![Build Status](https://travis-ci.org/gdyuldin/testrail_reporter.svg?branch=master)](https://travis-ci.org/gdyuldin/testrail_reporter)
+
 ```
 usage: report [-h] [--iso-link ISO_LINK] [--env-description ENV_DESCRIPTION]
               [--iso-id ISO_ID] [--testrail-url TESTRAIL_URL]

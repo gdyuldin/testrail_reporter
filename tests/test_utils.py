@@ -1,6 +1,6 @@
 import pytest
 
-from reporter.utils import get_testcase_id
+from testrail_reporter.utils import get_testcase_id
 
 
 @pytest.mark.parametrize('case_name, expected_id', (

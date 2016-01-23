@@ -2,9 +2,11 @@
 
 from setuptools import setup, find_packages
 
+
 setup(
+    use_scm_version={'write_to': 'testrail_reporter/_version.py'},
     name='testrail_reporter',
-    version='0.0.2',
+    # version='0.0.3',
     description='Report test results from xUnit xml file to TestRail',
     author='Georgy Dyuldin',
     author_email='gdyuldin@mirantis.com',
@@ -14,9 +16,10 @@ setup(
     setup_requires=[
         'requests',
         'pytest-runner',
+        'setuptools_scm',
     ],
     tests_require=[
-        'pytest',
-        'httpretty'
+        'pytest-mock',
+        'httpretty',
     ],
 )

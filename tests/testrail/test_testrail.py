@@ -4,16 +4,16 @@ import json
 import re
 from functools import partial
 
-from reporter.testrail.client import Case
-from reporter.testrail.client import Client
-from reporter.testrail.client import Config
-from reporter.testrail.client import Milestone
-from reporter.testrail.client import Plan
-from reporter.testrail.client import Project
-from reporter.testrail.client import Result
-from reporter.testrail.client import Run
-from reporter.testrail.client import Test as TrTest
-from reporter.testrail.client import Suite
+from testrail_reporter.testrail.client import Case
+from testrail_reporter.testrail.client import Client
+from testrail_reporter.testrail.client import Config
+from testrail_reporter.testrail.client import Milestone
+from testrail_reporter.testrail.client import Plan
+from testrail_reporter.testrail.client import Project
+from testrail_reporter.testrail.client import Result
+from testrail_reporter.testrail.client import Run
+from testrail_reporter.testrail.client import Test as TrTest
+from testrail_reporter.testrail.client import Suite
 
 
 @pytest.yield_fixture
@@ -348,6 +348,8 @@ def test_add_run_to_plan(client, plan):
         "config_ids": [16],
         "runs": [
             {
+                "name": "test_run",
+                "description": "test description",
                 "case_ids": [1, 2],
                 "config_ids": [16]
             }
