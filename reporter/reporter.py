@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 from functools import wraps
 import logging
@@ -24,14 +24,15 @@ def memoize(f):
 
 class Reporter(object):
 
-    def __init__(self, xunit_report, iso_link, iso_id, env_description, *args,
-                 **kwargs):
+    def __init__(self, xunit_report, iso_link, iso_id, env_description,
+                 test_results_link, *args, **kwargs):
         self._config = {}
         self._cache = {}
         self.iso_link = iso_link
         self.iso_id = iso_id
         self.xunit_report = xunit_report
         self.env_description = env_description
+        self.test_results_link = test_results_link
         super(Reporter, self).__init__(*args, **kwargs)
 
     def config_testrail(self, base_url, username, password, milestone, project,
@@ -149,9 +150,11 @@ class Reporter(object):
 
     def create_test_run(self, plan, cases):
         suite_name = "{} ({})".format(self.suite.name, self.env_description)
-        description = ('Results of system tests ({tests_suite}) on iso '
-                       '#{iso_number}').format(tests_suite=suite_name,
-                                               iso_number=self.iso_id)
+        description = (
+            'Run **{suite}** on iso [#{self.iso_id}]({self.iso_link}). \n'
+            '[Test results]({self.test_results_link})').format(
+                suite=suite_name,
+                self=self)
         run = Run(
             name=suite_name,
             description=description,
@@ -163,6 +166,11 @@ class Reporter(object):
         plan.add_run(run)
         return run
 
+    def print_run_url(self, test_run):
+        print('[TestRun URL] {}/index.php?/runs/view/{}'.format(
+                self._config['testrail']['base_url'],
+                test_run.id))
+
     def execute(self):
         xunit_suite, _ = self.get_xunit_test_suite()
         cases = self.find_testrail_cases(xunit_suite)
@@ -172,3 +180,4 @@ class Reporter(object):
         plan = self.get_or_create_plan()
         test_run = self.create_test_run(plan, cases)
         test_run.add_results_for_cases(cases)
+        self.print_run_url(test_run)

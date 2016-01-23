@@ -2,9 +2,10 @@
 
 from setuptools import setup, find_packages
 
+
 setup(
     name='testrail_reporter',
-    version='0.0.2',
+    version='0.0.3',
     description='Report test results from xUnit xml file to TestRail',
     author='Georgy Dyuldin',
     author_email='gdyuldin@mirantis.com',
@@ -17,6 +18,7 @@ setup(
     ],
     tests_require=[
         'pytest',
-        'httpretty'
+        'httpretty',
+        'pytest-mock'
     ],
 )

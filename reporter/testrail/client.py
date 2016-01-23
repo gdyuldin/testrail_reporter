@@ -188,7 +188,7 @@ class Plan(Item):
     def add_run(self, run):
         url = 'add_plan_entry/{}'.format(self.id)
         run_data = {k: v for k, v in run.data.items()
-                    if k in ('case_ids', 'config_ids')}
+                    if k in ('case_ids', 'config_ids', 'name', 'description')}
         request = {
             "suite_id": run.suite_id,
             "name": run.name,

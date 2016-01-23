@@ -348,6 +348,8 @@ def test_add_run_to_plan(client, plan):
         "config_ids": [16],
         "runs": [
             {
+                "name": "test_run",
+                "description": "test description",
                 "case_ids": [1, 2],
                 "config_ids": [16]
             }
