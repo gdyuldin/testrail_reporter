@@ -1,6 +1,16 @@
 Changelog
 =========
 
+%%version%% (unreleased)
+------------------------
+
+- Fix setup.py requirements. [Georgy Dyuldin]
+
+0.2 (2016-01-23)
+----------------
+
+- Add TestRun description, minor fixes. [Georgy Dyuldin]
+
 0.0.3 (2016-01-23)
 ------------------
 

@@ -13,7 +13,7 @@ setup(
     packages=find_packages(),
     scripts=['bin/report'],
     url="https://github.com/gdyuldin/testrail_reporter",
-    setup_requires=[
+    install_requires=[
         'requests',
         'pytest-runner',
         'setuptools_scm',
