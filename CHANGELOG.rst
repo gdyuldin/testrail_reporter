@@ -1,8 +1,10 @@
 Changelog
 =========
 
-%%version%% (unreleased)
-------------------------
+0.3 (2016-01-25)
+----------------
+
+- Fix setuptools < 12  _version.py issue. [Georgy Dyuldin]
 
 - Fix setup.py requirements. [Georgy Dyuldin]
 

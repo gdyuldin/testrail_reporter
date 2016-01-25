@@ -16,8 +16,8 @@ setup(
     install_requires=[
         'requests',
         'pytest-runner',
-        'setuptools_scm',
     ],
+    setup_requires=['setuptools_scm'],
     tests_require=[
         'pytest-mock',
         'httpretty',
