@@ -1,12 +1,17 @@
 Changelog
 =========
 
-0.3 (2016-01-25)
-----------------
+0.2.1 (2016-01-25)
+------------------
 
-- Fix setuptools < 12  _version.py issue. [Georgy Dyuldin]
+Fix
+~~~
 
-- Fix setup.py requirements. [Georgy Dyuldin]
+- Add default logging handler. [Georgy Dyuldin]
+
+- Setuptools older than 12  _version.py issue. [Georgy Dyuldin]
+
+- Setup.py requirements. [Georgy Dyuldin]
 
 0.2 (2016-01-23)
 ----------------
