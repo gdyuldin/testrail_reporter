@@ -97,4 +97,5 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.root.addHandler(logging.StreamHandler())
     main()
