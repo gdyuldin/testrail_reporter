@@ -1,6 +1,16 @@
 Changelog
 =========
 
+0.2.2 (2016-01-27)
+------------------------
+
+Fix
+~~~
+
+- Remove skipped tests from report. [Georgy Dyuldin]
+
+- Corrected matching of tempest uuid. [Georgy Dyuldin]
+
 0.2.1 (2016-01-25)
 ------------------
 
