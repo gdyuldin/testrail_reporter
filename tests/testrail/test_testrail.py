@@ -1,4 +1,5 @@
 import pytest
+from copy import deepcopy
 import httpretty
 import json
 import re
@@ -9,6 +10,7 @@ from testrail_reporter.testrail.client import Client
 from testrail_reporter.testrail.client import Config
 from testrail_reporter.testrail.client import Milestone
 from testrail_reporter.testrail.client import Plan
+from testrail_reporter.testrail.client import PlanEntry
 from testrail_reporter.testrail.client import Project
 from testrail_reporter.testrail.client import Result
 from testrail_reporter.testrail.client import Run
@@ -47,7 +49,9 @@ def _testrail_callback(data_kind):
         6: {'id': 6, 'name': 'passed'}
     }
     plan_response = {
-        7: {'id': 7, 'project_id': 1, 'name': 'old_test_plan'}
+        7: {'id': 7, 'project_id': 1, 'name': 'old_test_plan',
+            'entries': [{'id': 11, 'suite_id': 2, 'milestone_id': 8}],
+           }
     }
     milestone_response = {
         8: {'id': 8, 'project_id': 1}
@@ -66,6 +70,9 @@ def _testrail_callback(data_kind):
             data = _data[int(_id)]
         else:
             data = _data.values()
+            if data_kind == 'plan':
+                data = deepcopy(data)
+                data = [x for x in data if x.pop('entries')]
         return (200, headers, json.dumps(data))
 
     data = locals().get(data_kind + '_response')
@@ -178,6 +185,12 @@ def plan(project):
 
 
 @pytest.fixture
+def entry(plan):
+    entrys = plan.entries()
+    return entrys[0]
+
+
+@pytest.fixture
 def config(project):
     configs = project.configs()
     return configs[0]
@@ -271,6 +284,18 @@ def test_plan(project, plan):
     assert fetched_plan.id == plan.id
 
 
+def test_plan_entries(plan, suite):
+    entries = plan.entries()
+    assert isinstance(entries, list)
+    assert isinstance(entries[0], PlanEntry)
+    assert entries[0].suite_id == suite.id
+
+
+def test_plan_entry(plan, suite, entry):
+    fetched_entry = plan.entries(id=entry.id)
+    assert fetched_entry.id == entry.id
+
+
 def test_configs(project):
     configs = project.configs()
     assert isinstance(configs, list)
@@ -311,7 +336,7 @@ def test_add_plan(client, project):
 
     httpretty.register_uri(
         httpretty.POST,
-        re.compile(base + r'add_plan/.*'),
+        re.compile(base + r'add_plan/{}'.format(project.id)),
         body=json.dumps({'id': 8, 'project_id': 1, 'name': 'old_test_plan'}),
         match_querystring=True)
     new_plan = project.plans.add(name='test_plan', milestone_id=7)
@@ -327,12 +352,64 @@ def test_add_plan(client, project):
     assert new_plan.id == 8
 
 
+def test_add_entry_to_plan(client, plan):
+    base = re.escape(client.base_url)
+
+    httpretty.register_uri(
+        httpretty.POST,
+        re.compile(base + r'add_plan_entry/{}'.format(plan.id)),
+        body=json.dumps({'runs': [], 'suite_id': 2}),
+        match_querystring=True)
+
+    entry = PlanEntry(suite_id=14, name="test_run",
+        description="test description", case_ids=[1, 2], config_ids=[16])
+    plan.entries.add(entry)
+    expected = {
+        "suite_id": 14,
+        "name": "test_run",
+        "description": "test description",
+        "include_all": False,
+        "assignedto_id": None,
+        "case_ids": [1, 2],
+        "config_ids": [16],
+        "runs": []
+    }
+    result = json.loads(httpretty.last_request().body)
+    assert expected == result
+
+
+def test_update_plan_entry(client, plan, entry):
+    base = re.escape(client.base_url)
+    httpretty.register_uri(
+        httpretty.POST,
+        re.compile(base + r'update_plan_entry/{}/{}'.format(plan.id,
+                                                            entry.id)),
+        body=json.dumps({'runs': [], 'suite_id': 2}),
+        match_querystring=True)
+
+    entry.name = 'new name'
+    entry.description = 'new test description'
+    entry.case_ids = [1, 2, 3]
+    entry.assignedto_id = 55
+    entry.include_all = True
+    entry.update()
+    expected = {
+        "name": "new name",
+        "description": "new test description",
+        "assignedto_id": 55,
+        "include_all": True,
+        "case_ids": [1, 2, 3],
+    }
+    result = json.loads(httpretty.last_request().body)
+    assert expected == result
+
+
 def test_add_run_to_plan(client, plan):
     base = re.escape(client.base_url)
 
     httpretty.register_uri(
         httpretty.POST,
-        re.compile(base + r'add_plan_entry/.*'),
+        re.compile(base + r'add_plan_entry/{}'.format(plan.id)),
         body=json.dumps({'runs': [{'id': 8}]}),
         match_querystring=True)
 
@@ -365,7 +442,7 @@ def test_add_result(client, run):
 
     httpretty.register_uri(
         httpretty.POST,
-        re.compile(base + r'add_result/.*'),
+        re.compile(base + r'add_result/{}'.format(run.id)),
         body=json.dumps({'id': 5, 'status_id': 4}),
         match_querystring=True)
     result = run.results.add(status_id=1, comment="test result comment")
@@ -392,7 +469,7 @@ def test_add_results_for_cases(client, suite, run):
 
     httpretty.register_uri(
         httpretty.POST,
-        re.compile(base + r'add_results_for_cases/.*'),
+        re.compile(base + r'add_results_for_cases/{}'.format(run.id)),
         body=json.dumps([{'id': 5, 'status_id': 4}]),
         match_querystring=True)
     cases = suite.cases()

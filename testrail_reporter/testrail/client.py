@@ -1,4 +1,5 @@
 import logging
+import re
 
 import requests
 
@@ -47,7 +48,7 @@ class Collection(object):
             return items
 
         else:
-            return self._item_class.get(id)
+            return self.get(id)
 
     def __repr__(self):
         return '<Collection of {}>'.format(self._item_class.__name__)
@@ -77,8 +78,18 @@ class Collection(object):
     def get(self, id):
         return self._item_class.get(id)
 
-    def add(self, **kwargs):
-        item = self._to_object(kwargs)
+    def add(self, *args, **kwargs):
+        if len(args) > 1:
+            raise TypeError(
+                'add() takes zero or one argument ({} given)'.format(
+                    len(args)))
+        elif len(args) == 1:
+            item = args[0]
+            if not isinstance(item, self._item_class):
+                raise TypeError('arg must be an instance of {}'.format(
+                    self._item_class))
+        else:
+            item = self._to_object(kwargs)
         result = self._add(item._api_name(), item.data)
         return self._to_object(result)
 
@@ -95,7 +106,8 @@ class Item(object):
 
     @classmethod
     def _api_name(cls):
-        return cls.__name__.lower()
+        name = re.sub(r'([A-Z])', r'_\1', cls.__name__).strip('_')
+        return name.lower()
 
     def __getattr__(self, name):
         if name in self._data:
@@ -185,6 +197,12 @@ class Plan(Item):
         kwargs.update(add_kwargs)
         return super(self.__class__, self).__init__(id, **kwargs)
 
+    @property
+    def entries(self):
+        return PlanEntryCollection(PlanEntry,
+                                   list_url='get_plan/{}'.format(self.id),
+                                   parent_id=self.id)
+
     def add_run(self, run):
         url = 'add_plan_entry/{}'.format(self.id)
         run_data = {k: v for k, v in run.data.items()
@@ -200,6 +218,43 @@ class Plan(Item):
         }
         result = self._handler('POST', url, json=request)
         run.id = result['runs'][0]['id']
+
+
+class PlanEntryCollection(Collection):
+    def _list(self, name, params=None):
+        plan = Plan.get(self.parent_id)
+        entries = plan.data['entries']
+        for entry in entries:
+            entry['plan_id'] = self.parent_id
+        return entries
+
+    def get(self, id):
+        return self().find(id=id)
+
+
+class PlanEntry(Item):
+    def __init__(self, suite_id, name="", description="", include_all=False,
+                 config_ids=(), case_ids=(), runs=(), assignedto_id=None,
+                 id=None, plan_id=None, **kwargs):
+        add_kwargs = locals()
+        add_kwargs.pop('self')
+        add_kwargs.pop('kwargs')
+        add_kwargs.pop('id')
+        self.plan_id = add_kwargs.pop('plan_id')
+
+        kwargs.update(add_kwargs)
+        return super(self.__class__, self).__init__(id, **kwargs)
+
+    @classmethod
+    def get(cls, id):
+        raise Exception("Use Plan.entries.get() instead")
+
+    def update(self):
+        url = 'update_plan_entry/{}/{}'.format(self.plan_id, self.id)
+        data = {k: v for (k, v) in self.data.items()
+                if k in ("name", "description", "assignedto_id", "include_all",
+                         "case_ids")}
+        self._handler('POST', url, json=data)
 
 
 class Run(Item):
