@@ -107,7 +107,8 @@ class Reporter(object):
         elif xunit_case.failed:
             status_name = 'failed'
         elif xunit_case.skipped:
-            status_name = 'skipped'
+            # Do not save skipped tests
+            return
         elif xunit_case.errored:
             status_name = 'blocked'
         else:
