@@ -34,7 +34,8 @@ def _testrail_callback(data_kind):
         2: {'id': 2, 'project_id': 1}
     }
     case_response = {
-        3: {'id': 3, 'suite_id': 2, 'title': 'case title'}
+        3: {'id': 3, 'suite_id': 2, 'title': 'case title'},
+        31: {'id': 31, 'suite_id': 2, 'title': 'case title31'},
     }
     run_response = {
         4: {'id': 4, 'project_id': 1, 'suite_id': 2, 'milestone_id': 8,
@@ -396,7 +397,7 @@ def test_add_results_for_cases(client, suite, run):
         body=json.dumps([{'id': 5, 'status_id': 4}]),
         match_querystring=True)
     cases = suite.cases()
-    for case in cases:
+    for case in cases[:-1]:
         case.add_result(status_id=1, comment="test result comment")
     new_results = run.add_results_for_cases(cases)
     expected = {

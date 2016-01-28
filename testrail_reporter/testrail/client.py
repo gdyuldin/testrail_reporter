@@ -238,12 +238,17 @@ class ResultCollection(Collection):
             return
         results = []
         for case in cases:
+            if case.result is None:
+                continue
             result = case.result.data
             result['case_id'] = case.id
             results.append(result)
-        url = 'add_results_for_cases/{}'.format(run_id)
-        result = self._handler('POST', url, json={'results': results})
-        return [self._to_object(x) for x in result]
+        if results is not None:
+            url = 'add_results_for_cases/{}'.format(run_id)
+            result = self._handler('POST', url, json={'results': results})
+            return [self._to_object(x) for x in result]
+        else:
+            return []
 
 
 class Result(Item):

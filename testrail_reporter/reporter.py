@@ -129,6 +129,7 @@ class Reporter(object):
             elapsed=elasped,
             comment=comment
         )
+        return testrail_case
 
     def find_testrail_cases(self, xunit_suite):
         cases = self.suite.cases()
@@ -144,8 +145,8 @@ class Reporter(object):
             if testrail_case is None:
                 logger.warning('Testcase for {} not found'.format(test_name))
                 continue
-            self.add_result_to_case(testrail_case, xunit_case)
-            filtered_cases.append(testrail_case)
+            if self.add_result_to_case(testrail_case, xunit_case):
+                filtered_cases.append(testrail_case)
         cases[:] = filtered_cases
         return cases
 
