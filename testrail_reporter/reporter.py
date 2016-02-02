@@ -2,6 +2,7 @@ from __future__ import absolute_import, print_function
 
 from functools import wraps
 import logging
+import re
 
 from .testrail import Client as TrClient
 from .testrail.client import Run
@@ -101,6 +102,17 @@ class Reporter(object):
             ts, tr = xunitparser.parse(f)
             return ts, tr
 
+    def get_jenkins_report_url(self, xunit_case):
+        module, _, classname = xunit_case.classname.rpartition('.')
+        if module == '':
+            module = '(root)'
+        methodname = re.sub(r'[^a-zA_Z0-9_]', '_', xunit_case.methodname)
+        return '{job}testReport/{module}/{classname}/{methodname}/'.format(
+            job=self.test_results_link,
+            module=module,
+            classname=classname,
+            methodname=methodname)
+
     def add_result_to_case(self, testrail_case, xunit_case):
         if xunit_case.success:
             status_name = 'passed'
@@ -112,6 +124,8 @@ class Reporter(object):
         elif xunit_case.errored:
             status_name = 'blocked'
         else:
+            logger.warning('Unknown xunit case {} status {}'.format(
+                xunit_case.methodname, xunit_case.result))
             return
         status_ids = [k for k, v in self.testrail_statuses.items()
                       if v == status_name]
@@ -120,7 +134,10 @@ class Reporter(object):
                 status_name, xunit_case.methodname))
             return
         status_id = status_ids[0]
-        comment = xunit_case.message
+        test_result = xunit_case.message or 'Passed'
+        report_url = self.get_jenkins_report_url(xunit_case)
+        comment = '{}\nEnv: **{}**\n[Details]({})'.format(
+            test_result, self.env_description, report_url)
         elasped = int(xunit_case.time.total_seconds())
         if elasped > 0:
             elasped = "{}s".format(elasped)
