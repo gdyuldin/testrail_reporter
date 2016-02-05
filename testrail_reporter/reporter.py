@@ -106,7 +106,7 @@ class Reporter(object):
         module, _, classname = xunit_case.classname.rpartition('.')
         if module == '':
             module = '(root)'
-        methodname = re.sub(r'[^a-zA_Z0-9_]', '_', xunit_case.methodname)
+        methodname = re.sub(r'[^a-zA-Z0-9_]', '_', xunit_case.methodname)
         return '{job}testReport/{module}/{classname}/{methodname}/'.format(
             job=self.test_results_link,
             module=module,

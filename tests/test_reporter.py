@@ -77,6 +77,8 @@ def test_print_run_url(reporter, mocker):
         'http://t_job/testReport/a.b.c/TClass/test_method_a_b_/'),
     ('TClass', 'test_method[a,b]', 'http://t_job/',
         'http://t_job/testReport/(root)/TClass/test_method_a_b_/'),
+    ('TClass', 'test_method[AS,b]', 'http://t_job/',
+        'http://t_job/testReport/(root)/TClass/test_method_AS_b_/'),
 ))
 def test_get_jenkins_report_url(reporter, classname, methodname, job_url,
                                 expected_url):

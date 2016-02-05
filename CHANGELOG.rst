@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.3.1 (2016-02-05)
+------------------
+
+Fix
+~~~
+
+- Jenkins test result URL builder. [Georgy Dyuldin]
+
 0.3.0 (2016-02-02)
 ------------------
 
