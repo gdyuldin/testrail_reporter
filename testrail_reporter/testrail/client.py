@@ -199,7 +199,9 @@ class Plan(Item):
             "runs": [run_data],
         }
         result = self._handler('POST', url, json=request)
-        run.id = result['runs'][0]['id']
+        new_run_data = result['runs'][0]
+        run.id = new_run_data.pop('id')
+        run.data.update(new_run_data)
 
 
 class Run(Item):

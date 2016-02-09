@@ -24,8 +24,7 @@ def testrail_client(mocker):
 
 @pytest.fixture
 def reporter(testrail_client):
-    reporter = Reporter(iso_link="http://iso_link",
-                        xunit_report='tests/xunit_files/report.xml',
+    reporter = Reporter(xunit_report='tests/xunit_files/report.xml',
                         env_description='vlan_ceph',
                         iso_id=385,
                         test_results_link="http://test_job/")
@@ -58,14 +57,14 @@ def test_parse_report(reporter):
 
 def test_print_run_url(reporter, mocker):
     stdout = mocker.patch('sys.stdout', new=StringIO())
-    run = mock.Mock(id=2)
+    run = mock.Mock(url='http://report_url/')
     mocker.patch.object(reporter, 'find_testrail_cases', return_value=[Case()])
     mocker.patch.object(reporter, 'get_or_create_plan',
                         return_value=Plan('test_plan'))
     mocker.patch.object(reporter, 'create_test_run', return_value=run)
     reporter.execute()
     assert stdout.getvalue() == (
-        '[TestRun URL] https://testrail/index.php?/runs/view/2\n')
+        '[TestRun URL] http://report_url/\n')
 
 
 @pytest.mark.parametrize('classname, methodname, job_url, expected_url', (

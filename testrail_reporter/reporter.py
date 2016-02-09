@@ -25,12 +25,12 @@ def memoize(f):
 
 class Reporter(object):
 
-    def __init__(self, xunit_report, iso_link, iso_id, env_description,
+    def __init__(self, xunit_report, iso_id, env_description,
                  test_results_link, *args, **kwargs):
         self._config = {}
         self._cache = {}
-        self.iso_link = iso_link
         self.iso_id = iso_id
+        self.plan_description = '#{0.iso_id} tests'.format(self)
         self.xunit_report = xunit_report
         self.env_description = env_description
         self.test_results_link = test_results_link
@@ -90,7 +90,7 @@ class Reporter(object):
         plan = self.project.plans.find(name=plan_name)
         if plan is None:
             plan = self.project.plans.add(name=plan_name,
-                                          description=self.iso_link,
+                                          description=self.plan_description,
                                           milestone_id=self.milestone.id)
             logger.debug('Created new plan "{}"'.format(plan_name))
         else:
@@ -170,7 +170,7 @@ class Reporter(object):
     def create_test_run(self, plan, cases):
         suite_name = "{} ({})".format(self.suite.name, self.env_description)
         description = (
-            'Run **{suite}** on iso [#{self.iso_id}]({self.iso_link}). \n'
+            'Run **{suite}** on iso #{self.iso_id}. \n'
             '[Test results]({self.test_results_link})').format(
                 suite=suite_name,
                 self=self)
@@ -186,9 +186,7 @@ class Reporter(object):
         return run
 
     def print_run_url(self, test_run):
-        print('[TestRun URL] {}/index.php?/runs/view/{}'.format(
-                self._config['testrail']['base_url'],
-                test_run.id))
+        print('[TestRun URL] {}'.format(test_run.url))
 
     def execute(self):
         xunit_suite, _ = self.get_xunit_test_suite()

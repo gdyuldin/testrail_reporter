@@ -26,8 +26,6 @@ def main():
         'TESTRAIL_MILESTONE': '9.0',
         'TESTRAIL_TEST_SUITE': '[{0.testrail_milestone}] MOSQA',
         'XUNIT_REPORT': 'report.xml',
-        'OPERATION_SYSTEM': 'Ubuntu 14.04',
-        'ISO_LINK': 'http://test',
         'ISO_ID': '000',
         'ENV_DESCRIPTION': '',
         'TEST_RESULTS_LINK': '',
@@ -38,9 +36,6 @@ def main():
     parser.add_argument('xunit_report', type=filename,
                         default=defaults['XUNIT_REPORT'],
                         help='xUnit report XML file')
-    parser.add_argument('--iso-link', type=str,
-                        default=defaults['ISO_LINK'],
-                        help='link to iso')
     parser.add_argument('--env-description', type=str,
                         default=defaults['ENV_DESCRIPTION'],
                         help='env deploy type description (for TestRun name)')
@@ -80,7 +75,6 @@ def main():
 
     reporter = Reporter(
         xunit_report=args.xunit_report,
-        iso_link=args.iso_link,
         iso_id=args.iso_id,
         env_description=args.env_description,
         test_results_link=args.test_results_link,
