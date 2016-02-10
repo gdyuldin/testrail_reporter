@@ -1,6 +1,22 @@
 Changelog
 =========
 
+0.3.3 (2016-02-10)
+------------------
+
+Fix
+~~~
+
+- Add retrying on 429 HTTP response from testrail. [Georgy Dyuldin]
+
+0.3.2 (2016-02-09)
+------------------
+
+Fix
+~~~
+
+- Remove unnecessary call parameters. [Georgy Dyuldin]
+
 0.3.1 (2016-02-05)
 ------------------
 

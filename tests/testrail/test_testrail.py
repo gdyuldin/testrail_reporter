@@ -418,3 +418,34 @@ def test_add_results_for_cases(client, suite, run):
     assert type(new_results) is list
     assert type(new_results[0]) is Result
     assert new_results[0].id == 5
+
+
+@pytest.mark.parametrize('statuses', (
+    [200],
+    [429, 200],
+    [429, 429, 429, 429, 200],
+    pytest.mark.xfail([429, 429, 429, 429, 429, 200]),
+    pytest.mark.xfail([300]),
+    pytest.mark.xfail([400]),
+    pytest.mark.xfail([500]),
+))
+def test_http_errors(api_mock, mocker, statuses):
+    client = Client(
+        base_url='http://testrail/',
+        username='user',
+        password='password')
+
+    def request_callback(request, uri, headers):
+        status = statuses.pop(0)
+        return (status, headers, "[]")
+
+    url = re.escape('http://testrail/index.php?/api/v2/get_projects')
+
+    httpretty.register_uri(
+        httpretty.GET,
+        re.compile(url),
+        body=request_callback,
+        match_querystring=True)
+
+    mocker.patch('time.sleep')
+    client.projects()

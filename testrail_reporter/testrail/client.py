@@ -1,4 +1,5 @@
 import logging
+import time
 
 import requests
 
@@ -292,8 +293,16 @@ class Client(object):
         kwargs['auth'] = (self.username, self.password)
         kwargs['headers'] = {'Content-type': 'application/json'}
         logger.debug('Make {} request to {}'.format(method, url))
-        response = requests.request(
-            method, url, allow_redirects=False, **kwargs)
+        for _ in range(5):
+            response = requests.request(
+                method, url, allow_redirects=False, **kwargs)
+            # To many requests
+            if response.status_code == 429:
+                time.sleep(60)
+                continue
+            else:
+                break
+        # Redirect or error
         if response.status_code >= 300:
             raise Exception(
                 "Wrong response:\n"
