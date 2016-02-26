@@ -27,7 +27,8 @@ def reporter(testrail_client):
     reporter = Reporter(xunit_report='tests/xunit_files/report.xml',
                         env_description='vlan_ceph',
                         iso_id=385,
-                        test_results_link="http://test_job/")
+                        test_results_link="http://test_job/",
+                        matching_field="custom_report_label")
     reporter.config_testrail(
         base_url="https://testrail",
         username="user",
@@ -99,3 +100,70 @@ def test_add_result_to_case(reporter):
     reporter.add_result_to_case(testrail_case, xunit_case)
     assert report_url in testrail_case.result.comment
     assert reporter.env_description in testrail_case.result.comment
+
+
+@pytest.mark.parametrize('methodname, match_value, is_situable', (
+    ('test_a', 'test_a', True),
+    ('test_a', 'test_b', False),
+    ('test_a', 'test_ab', False),
+    ('test_ab', 'test_a', False),
+    ('test_a[123]', '123', True),
+    ('test_a[1123]', '123', False),
+    ('test_a[123]', '1123', False),
+    ('test_a[123]', '1234', False),
+    ('test_a[1234]', '123', False),
+    ('test_a[(1123)]', '1123', True),
+    ('test_a[123][id-2390f766-836d-40ef-9aeb-e810d78207fb]',
+        '2390f766-836d-40ef-9aeb-e810d78207fb', True),
+))
+def test_match_case(reporter, methodname, match_value, is_situable):
+    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+    xunit_case = XunitCase(classname='a.b.C', methodname=methodname)
+    case = Case(custom_report_label=match_value)
+    assert is_situable == reporter.is_xunit_case_situable(xunit_case, case)
+
+
+def check_mapping(result, expected_dict):
+    __tracebackhide__ = True
+    result_dict = {k.custom_report_label: v.methodname
+                   for k, v in result.items()}
+    assert expected_dict == result_dict
+
+
+@pytest.mark.parametrize('xunit_names, testrail_names, expected', (
+    ([], [], {}),
+    (['test_a[123]'], ['123'], {'123': 'test_a[123]'}),
+    (['test_a[123]'], ['123', 'test_b'], {'123': 'test_a[123]'}),
+    (['test_a', 'test_b'], ['test_b'], {'test_b': 'test_b'}),
+    pytest.mark.xfail((['test_a[123]', 'test_b[123]'], ['123'], {})),
+    pytest.mark.xfail((['test_a[123]'], ['123', '123'], {})),
+))
+def test_map_cases(reporter, xunit_names, testrail_names, expected):
+    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+    xunit_cases = [XunitCase(classname='a.b.C', methodname=x)
+                   for x in xunit_names]
+    testrail_cases = [Case(custom_report_label=x, title=x)
+                      for x in testrail_names]
+    check_mapping(reporter.map_cases(xunit_cases, testrail_cases), expected)
+
+
+@pytest.mark.parametrize('xunit_names, testrail_names, expected', (
+    ([], [], ''),
+    (['test_a[123]', 'test_b[123]'], ['123'], 'test_a[123]'),
+    (['test_a[123]', 'test_b[123]'], ['123'], 'test_b[123]'),
+    (['test_a[123]', 'test_b[123]'], ['123'], 'title_123'),
+    (['test_a[123]'], ['123', '123'], 'test_a[123]'),
+    (['test_a[123]'], ['123', '123'], 'title_123'),
+))
+def test_error_map_logging(reporter, xunit_names, testrail_names, expected,
+                           caplog):
+    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+    xunit_cases = [XunitCase(classname='a.b.C', methodname=x)
+                   for x in xunit_names]
+    testrail_cases = [Case(custom_report_label=x, title='title_{}'.format(x))
+                      for x in testrail_names]
+    try:
+        reporter.map_cases(xunit_cases, testrail_cases)
+    except Exception:
+        pass
+    assert expected in caplog.text()

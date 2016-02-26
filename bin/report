@@ -25,7 +25,10 @@ def main():
         'TESTRAIL_PROJECT': 'Mirantis OpenStack',
         'TESTRAIL_MILESTONE': '9.0',
         'TESTRAIL_TEST_SUITE': '[{0.testrail_milestone}] MOSQA',
+        'TESTRAIL_MATCHING_FIELD': 'custom_report_label',
+
         'XUNIT_REPORT': 'report.xml',
+
         'ISO_ID': '000',
         'ENV_DESCRIPTION': '',
         'TEST_RESULTS_LINK': '',
@@ -63,6 +66,9 @@ def main():
     parser.add_argument('--testrail-suite', type=str,
                         default=defaults['TESTRAIL_TEST_SUITE'],
                         help='testrail project suite name')
+    parser.add_argument('--testrail-matching-field', type=str,
+                        default=defaults['TESTRAIL_MATCHING_FIELD'],
+                        help='testrail case field for xUnit case matching')
 
     parser.add_argument('--verbose', '-v', action='store_true',
                         default=False,
@@ -78,6 +84,7 @@ def main():
         iso_id=args.iso_id,
         env_description=args.env_description,
         test_results_link=args.test_results_link,
+        matching_field=args.testrail_matching_field,
     )
     suite = args.testrail_suite.format(args)
     reporter.config_testrail(

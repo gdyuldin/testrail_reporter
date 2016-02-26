@@ -1,13 +1,13 @@
 from __future__ import absolute_import, print_function
 
 from functools import wraps
+from collections import defaultdict
 import logging
 import re
 
 from .testrail import Client as TrClient
 from .testrail.client import Run
 from .vendor import xunitparser
-from .utils import get_testcase_id
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def memoize(f):
 class Reporter(object):
 
     def __init__(self, xunit_report, iso_id, env_description,
-                 test_results_link, *args, **kwargs):
+                 test_results_link, matching_field, *args, **kwargs):
         self._config = {}
         self._cache = {}
         self.iso_id = iso_id
@@ -34,6 +34,7 @@ class Reporter(object):
         self.xunit_report = xunit_report
         self.env_description = env_description
         self.test_results_link = test_results_link
+        self.matching_field = matching_field
         super(Reporter, self).__init__(*args, **kwargs)
 
     def config_testrail(self, base_url, username, password, milestone, project,
@@ -113,6 +114,28 @@ class Reporter(object):
             classname=classname,
             methodname=methodname)
 
+    def is_xunit_case_situable(self, xunit_case, case):
+        full_name = '{0.classname}.{0.methodname}'.format(xunit_case)
+        full_name = xunit_case.methodname
+        match_value = getattr(case, self.matching_field)
+        split_symbols_base = [
+            r'a-zA-Z',
+            r'\(\)',
+            r'\[\]',
+            r',',
+        ]
+        split_symbols = ''
+        for group in split_symbols_base:
+            if re.search(r'[{}]'.format(group), match_value) is None:
+                split_symbols += group
+        groups = [x for x in re.split(r'[{}]'.format(split_symbols), full_name)
+                  if x]
+        groups.reverse()
+        for group in groups:
+            if group.strip('id-') == match_value:
+                return True
+        return False
+
     def add_result_to_case(self, testrail_case, xunit_case):
         if xunit_case.success:
             status_name = 'passed'
@@ -148,20 +171,46 @@ class Reporter(object):
         )
         return testrail_case
 
+    def map_cases(self, xunit_suite, testrail_cases):
+
+        def get_duplicates(array, pos):
+            grouped = defaultdict(list)
+            for el in array:
+                el = list(el)
+                index = el.pop(pos)
+                grouped[index].append(el[0])
+            return [(k, v) for k, v in grouped.items() if len(v) > 1]
+
+        mapping = []
+        for testrail_case in testrail_cases:
+            for xunit_case in xunit_suite:
+                if not self.is_xunit_case_situable(xunit_case, testrail_case):
+                    continue
+                mapping.append((testrail_case, xunit_case))
+        duplicated_xunit_cases = get_duplicates(mapping, 0)
+        if duplicated_xunit_cases:
+            logger.error('Found xunit cases matches to single testrail case:')
+            for tr_case, xu_cases in duplicated_xunit_cases:
+                for xu_case in xu_cases:
+                    logger.error('TestRail "{0.title}" - xUnit "{1.classname}.'
+                                 '{1.methodname}"'.format(tr_case, xu_case))
+            raise Exception("Can't map some xunit cases")
+        duplicated_testrail_cases = get_duplicates(mapping, 1)
+        if duplicated_testrail_cases:
+            logger.error('Found testrail cases matches to single xunit case:')
+            for xu_case, tr_cases in duplicated_testrail_cases:
+                for tr_case in tr_cases:
+                    logger.error('xUnit "{1.classname}.{1.methodname} - '
+                                 'TestRail "{0.title}"'.format(tr_case,
+                                                               xu_case))
+            raise Exception("Can't map some testrail cases")
+        return dict(mapping)
+
     def find_testrail_cases(self, xunit_suite):
         cases = self.suite.cases()
+        mapping = self.map_cases(xunit_suite, cases)
         filtered_cases = []
-        for xunit_case in xunit_suite:
-            test_name = xunit_case.methodname
-            case_id = get_testcase_id(test_name)
-            if case_id is None:
-                logger.warning("Can't extract case ID from {}".format(
-                    test_name))
-                continue
-            testrail_case = cases.find(custom_report_label=case_id)
-            if testrail_case is None:
-                logger.warning('Testcase for {} not found'.format(test_name))
-                continue
+        for testrail_case, xunit_case in mapping.items():
             if self.add_result_to_case(testrail_case, xunit_case):
                 filtered_cases.append(testrail_case)
         cases[:] = filtered_cases

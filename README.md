@@ -9,7 +9,8 @@ usage: report [-h] [--env-description ENV_DESCRIPTION] [--iso-id ISO_ID]
               [--testrail-password TESTRAIL_PASSWORD]
               [--testrail-project TESTRAIL_PROJECT]
               [--testrail-milestone TESTRAIL_MILESTONE]
-              [--testrail-suite TESTRAIL_SUITE] [--verbose]
+              [--testrail-suite TESTRAIL_SUITE]
+              [--testrail-matching-field TESTRAIL_MATCHING_FIELD] [--verbose]
               xunit_report
 
 Report to testrail
@@ -36,5 +37,8 @@ optional arguments:
                         testrail project milestone
   --testrail-suite TESTRAIL_SUITE
                         testrail project suite name
+  --testrail-matching-field TESTRAIL_MATCHING_FIELD
+                        testrail case field for xUnit case matching
   --verbose, -v         Verbose mode
+
 ```
