@@ -85,7 +85,6 @@ class Reporter(object):
 
     def get_or_create_plan(self):
         """Get exists or create new TestRail Plan"""
-        return self.project.plans.find(name='9.0 kilo iso #124')
         plan_name = self.get_plan_name()
         plan = self.project.plans.find(name=plan_name)
         if plan is None:
