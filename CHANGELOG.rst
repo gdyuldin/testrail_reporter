@@ -1,6 +1,31 @@
 Changelog
 =========
 
+0.4.0 (2016-03-21)
+------------------
+
+New
+~~~
+
+- Matching cases on template-based rules. [Georgy Dyuldin]
+
+  Now cases match by `identification strings`, which are generated with
+  templates from cases.
+
+- Matching logic was changed. [Georgy Dyuldin]
+
+  This patch changes Testrail TestCases and xUnit test methods results
+  matching method. Now each result name (contained className and
+  methodName) compare with special field in Testrail
+  ('custom_report_label' by default), and if Testrail field value
+  contains in full test name - this result and TestCase marked as pair.
+  If there are any collision after compare - reporter will raise
+  an Exception.
+
+  Matching field in TestRail Case are configurable through evironment
+  variable 'TESTRAIL_MATCHING_FIELD' or call parameter
+  '--testrail-matching-field'.
+
 0.3.3 (2016-02-10)
 ------------------
 

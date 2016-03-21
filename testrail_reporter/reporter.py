@@ -1,13 +1,13 @@
 from __future__ import absolute_import, print_function
 
 from functools import wraps
-from collections import defaultdict
 import logging
 import re
 
 from .testrail import Client as TrClient
 from .testrail.client import Run
 from .vendor import xunitparser
+
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +20,13 @@ def memoize(f):
         if cached is None:
             cached = self._cache[key] = f(self, *args, **kwargs)
         return cached
+
     return wrapper
 
 
 class Reporter(object):
-
     def __init__(self, xunit_report, iso_id, env_description,
-                 test_results_link, matching_field, *args, **kwargs):
+                 test_results_link, case_mapper, *args, **kwargs):
         self._config = {}
         self._cache = {}
         self.iso_id = iso_id
@@ -34,16 +34,14 @@ class Reporter(object):
         self.xunit_report = xunit_report
         self.env_description = env_description
         self.test_results_link = test_results_link
-        self.matching_field = matching_field
+        self.case_mapper = case_mapper
         super(Reporter, self).__init__(*args, **kwargs)
 
     def config_testrail(self, base_url, username, password, milestone, project,
                         tests_suite):
-        self._config['testrail'] = dict(
-            base_url=base_url,
-            username=username,
-            password=password,
-        )
+        self._config['testrail'] = dict(base_url=base_url,
+                                        username=username,
+                                        password=password, )
         self.milestone_name = milestone
         self.project_name = project
         self.tests_suite_name = tests_suite
@@ -87,6 +85,7 @@ class Reporter(object):
 
     def get_or_create_plan(self):
         """Get exists or create new TestRail Plan"""
+        return self.project.plans.find(name='9.0 kilo iso #124')
         plan_name = self.get_plan_name()
         plan = self.project.plans.find(name=plan_name)
         if plan is None:
@@ -114,35 +113,15 @@ class Reporter(object):
             classname=classname,
             methodname=methodname)
 
-    def is_xunit_case_situable(self, xunit_case, case):
-        full_name = '{0.classname}.{0.methodname}'.format(xunit_case)
-        full_name = xunit_case.methodname
-        match_value = getattr(case, self.matching_field)
-        split_symbols_base = [
-            r'a-zA-Z',
-            r'\(\)',
-            r'\[\]',
-            r',',
-        ]
-        split_symbols = ''
-        for group in split_symbols_base:
-            if re.search(r'[{}]'.format(group), match_value) is None:
-                split_symbols += group
-        groups = [x for x in re.split(r'[{}]'.format(split_symbols), full_name)
-                  if x]
-        groups.reverse()
-        for group in groups:
-            if group.strip('id-') == match_value:
-                return True
-        return False
-
     def add_result_to_case(self, testrail_case, xunit_case):
         if xunit_case.success:
             status_name = 'passed'
         elif xunit_case.failed:
             status_name = 'failed'
         elif xunit_case.skipped:
-            # Do not save skipped tests
+            logger.debug(
+                'Case {0.classname}.{0.methodname} is skipped'.format(
+                    xunit_case))
             return
         elif xunit_case.errored:
             status_name = 'blocked'
@@ -150,7 +129,8 @@ class Reporter(object):
             logger.warning('Unknown xunit case {} status {}'.format(
                 xunit_case.methodname, xunit_case.result))
             return
-        status_ids = [k for k, v in self.testrail_statuses.items()
+        status_ids = [k
+                      for k, v in self.testrail_statuses.items()
                       if v == status_name]
         if len(status_ids) == 0:
             logger.warning("Can't find status {} for result {}".format(
@@ -164,51 +144,14 @@ class Reporter(object):
         elasped = int(xunit_case.time.total_seconds())
         if elasped > 0:
             elasped = "{}s".format(elasped)
-        testrail_case.add_result(
-            status_id=status_id,
-            elapsed=elasped,
-            comment=comment
-        )
+        testrail_case.add_result(status_id=status_id,
+                                 elapsed=elasped,
+                                 comment=comment)
         return testrail_case
-
-    def map_cases(self, xunit_suite, testrail_cases):
-
-        def get_duplicates(array, pos):
-            grouped = defaultdict(list)
-            for el in array:
-                el = list(el)
-                index = el.pop(pos)
-                grouped[index].append(el[0])
-            return [(k, v) for k, v in grouped.items() if len(v) > 1]
-
-        mapping = []
-        for testrail_case in testrail_cases:
-            for xunit_case in xunit_suite:
-                if not self.is_xunit_case_situable(xunit_case, testrail_case):
-                    continue
-                mapping.append((testrail_case, xunit_case))
-        duplicated_xunit_cases = get_duplicates(mapping, 0)
-        if duplicated_xunit_cases:
-            logger.error('Found xunit cases matches to single testrail case:')
-            for tr_case, xu_cases in duplicated_xunit_cases:
-                for xu_case in xu_cases:
-                    logger.error('TestRail "{0.title}" - xUnit "{1.classname}.'
-                                 '{1.methodname}"'.format(tr_case, xu_case))
-            raise Exception("Can't map some xunit cases")
-        duplicated_testrail_cases = get_duplicates(mapping, 1)
-        if duplicated_testrail_cases:
-            logger.error('Found testrail cases matches to single xunit case:')
-            for xu_case, tr_cases in duplicated_testrail_cases:
-                for tr_case in tr_cases:
-                    logger.error('xUnit "{1.classname}.{1.methodname} - '
-                                 'TestRail "{0.title}"'.format(tr_case,
-                                                               xu_case))
-            raise Exception("Can't map some testrail cases")
-        return dict(mapping)
 
     def find_testrail_cases(self, xunit_suite):
         cases = self.suite.cases()
-        mapping = self.map_cases(xunit_suite, cases)
+        mapping = self.case_mapper.map(xunit_suite, cases)
         filtered_cases = []
         for testrail_case, xunit_case in mapping.items():
             if self.add_result_to_case(testrail_case, xunit_case):
@@ -218,19 +161,16 @@ class Reporter(object):
 
     def create_test_run(self, plan, cases):
         suite_name = "{} ({})".format(self.suite.name, self.env_description)
-        description = (
-            'Run **{suite}** on iso #{self.iso_id}. \n'
-            '[Test results]({self.test_results_link})').format(
-                suite=suite_name,
-                self=self)
-        run = Run(
-            name=suite_name,
-            description=description,
-            suite_id=self.suite.id,
-            milestone_id=self.milestone.id,
-            config_ids=[],
-            case_ids=[x.id for x in cases],
-        )
+        description = ('Run **{suite}** on iso #{self.iso_id}. \n'
+                       '[Test results]({self.test_results_link})').format(
+                           suite=suite_name,
+                           self=self)
+        run = Run(name=suite_name,
+                  description=description,
+                  suite_id=self.suite.id,
+                  milestone_id=self.milestone.id,
+                  config_ids=[],
+                  case_ids=[x.id for x in cases], )
         plan.add_run(run)
         return run
 
