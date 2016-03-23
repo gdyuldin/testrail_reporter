@@ -159,8 +159,18 @@ class Project(Item):
 class Suite(Item):
     @property
     def cases(self):
-        return Collection(Case, list_url='get_cases/{}&suite_id={}'.format(
+        return CaseCollection(Case, list_url='get_cases/{}&suite_id={}'.format(
             self.project_id, self.id))
+
+
+class CaseCollection(Collection):
+
+    def _add(self, name, data, **kwargs):
+        url = self.add_url.format(name=name)
+        section_id = data.pop('section_id')
+        data.pop('result', None)
+        url = '{}/{}'.format(url, section_id)
+        return self._handler('POST', url, json=data, **kwargs)
 
 
 class Case(Item):

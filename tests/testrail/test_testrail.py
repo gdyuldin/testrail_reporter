@@ -27,38 +27,29 @@ def api_mock():
 
 def _testrail_callback(data_kind):
 
-    project_response = {
-        1: {'id': 1}
-    }
-    suite_response = {
-        2: {'id': 2, 'project_id': 1}
-    }
+    project_response = {1: {'id': 1}}
+    suite_response = {2: {'id': 2, 'project_id': 1}}
     case_response = {
-        3: {'id': 3, 'suite_id': 2, 'title': 'case title'},
-        31: {'id': 31, 'suite_id': 2, 'title': 'case title31'},
+        3: {'id': 3,
+            'suite_id': 2,
+            'title': 'case title'},
+        31: {'id': 31,
+             'suite_id': 2,
+             'title': 'case title31'},
     }
     run_response = {
-        4: {'id': 4, 'project_id': 1, 'suite_id': 2, 'milestone_id': 8,
+        4: {'id': 4,
+            'project_id': 1,
+            'suite_id': 2,
+            'milestone_id': 8,
             'config_id': 9}
     }
-    result_response = {
-        5: {'id': 5, 'status_id': 6}
-    }
-    status_response = {
-        6: {'id': 6, 'name': 'passed'}
-    }
-    plan_response = {
-        7: {'id': 7, 'project_id': 1, 'name': 'old_test_plan'}
-    }
-    milestone_response = {
-        8: {'id': 8, 'project_id': 1}
-    }
-    config_response = {
-        9: {'id': 9, 'project_id': 1}
-    }
-    test_response = {
-        10: {'id': 10, 'run_id': 4}
-    }
+    result_response = {5: {'id': 5, 'status_id': 6}}
+    status_response = {6: {'id': 6, 'name': 'passed'}}
+    plan_response = {7: {'id': 7, 'project_id': 1, 'name': 'old_test_plan'}}
+    milestone_response = {8: {'id': 8, 'project_id': 1}}
+    config_response = {9: {'id': 9, 'project_id': 1}}
+    test_response = {10: {'id': 10, 'run_id': 4}}
 
     def callback(request, uri, headers, _data):
         _id = uri.split('get_{}/'.format(data_kind))[-1]
@@ -76,63 +67,52 @@ def _testrail_callback(data_kind):
 
 @pytest.fixture
 def client(api_mock):
-    client = Client(
-        base_url='http://testrail/',
-        username='user',
-        password='password')
+    client = Client(base_url='http://testrail/',
+                    username='user',
+                    password='password')
 
     base = re.escape(client.base_url)
 
-    httpretty.register_uri(
-        httpretty.GET,
-        re.compile(base + r'get_project(s|/).*'),
-        body=_testrail_callback('project'),
-        match_querystring=True)
-    httpretty.register_uri(
-        httpretty.GET,
-        re.compile(base + r'get_suite(s|/).*'),
-        body=_testrail_callback('suite'),
-        match_querystring=True)
-    httpretty.register_uri(
-        httpretty.GET,
-        re.compile(base + r'get_case(s|/).*'),
-        body=_testrail_callback('case'),
-        match_querystring=True)
-    httpretty.register_uri(
-        httpretty.GET,
-        re.compile(base + r'get_plan(s|/).*'),
-        body=_testrail_callback('plan'),
-        match_querystring=True)
-    httpretty.register_uri(
-        httpretty.GET,
-        re.compile(base + r'get_run(s|/).*'),
-        body=_testrail_callback('run'),
-        match_querystring=True)
-    httpretty.register_uri(
-        httpretty.GET,
-        re.compile(base + r'get_result(s|/).*'),
-        body=_testrail_callback('result'),
-        match_querystring=True)
-    httpretty.register_uri(
-        httpretty.GET,
-        re.compile(base + r'get_status(es|/).*'),
-        body=_testrail_callback('status'),
-        match_querystring=True)
-    httpretty.register_uri(
-        httpretty.GET,
-        re.compile(base + r'get_milestone(s|/).*'),
-        body=_testrail_callback('milestone'),
-        match_querystring=True)
-    httpretty.register_uri(
-        httpretty.GET,
-        re.compile(base + r'get_config(s|/).*'),
-        body=_testrail_callback('config'),
-        match_querystring=True)
-    httpretty.register_uri(
-        httpretty.GET,
-        re.compile(base + r'get_test(s|/).*'),
-        body=_testrail_callback('test'),
-        match_querystring=True)
+    httpretty.register_uri(httpretty.GET,
+                           re.compile(base + r'get_project(s|/).*'),
+                           body=_testrail_callback('project'),
+                           match_querystring=True)
+    httpretty.register_uri(httpretty.GET,
+                           re.compile(base + r'get_suite(s|/).*'),
+                           body=_testrail_callback('suite'),
+                           match_querystring=True)
+    httpretty.register_uri(httpretty.GET,
+                           re.compile(base + r'get_case(s|/).*'),
+                           body=_testrail_callback('case'),
+                           match_querystring=True)
+    httpretty.register_uri(httpretty.GET,
+                           re.compile(base + r'get_plan(s|/).*'),
+                           body=_testrail_callback('plan'),
+                           match_querystring=True)
+    httpretty.register_uri(httpretty.GET,
+                           re.compile(base + r'get_run(s|/).*'),
+                           body=_testrail_callback('run'),
+                           match_querystring=True)
+    httpretty.register_uri(httpretty.GET,
+                           re.compile(base + r'get_result(s|/).*'),
+                           body=_testrail_callback('result'),
+                           match_querystring=True)
+    httpretty.register_uri(httpretty.GET,
+                           re.compile(base + r'get_status(es|/).*'),
+                           body=_testrail_callback('status'),
+                           match_querystring=True)
+    httpretty.register_uri(httpretty.GET,
+                           re.compile(base + r'get_milestone(s|/).*'),
+                           body=_testrail_callback('milestone'),
+                           match_querystring=True)
+    httpretty.register_uri(httpretty.GET,
+                           re.compile(base + r'get_config(s|/).*'),
+                           body=_testrail_callback('config'),
+                           match_querystring=True)
+    httpretty.register_uri(httpretty.GET,
+                           re.compile(base + r'get_test(s|/).*'),
+                           body=_testrail_callback('test'),
+                           match_querystring=True)
     return client
 
 
@@ -310,11 +290,12 @@ def test_unsuccess_find(suite):
 def test_add_plan(client, project):
     base = re.escape(client.base_url)
 
-    httpretty.register_uri(
-        httpretty.POST,
-        re.compile(base + r'add_plan/.*'),
-        body=json.dumps({'id': 8, 'project_id': 1, 'name': 'old_test_plan'}),
-        match_querystring=True)
+    httpretty.register_uri(httpretty.POST,
+                           re.compile(base + r'add_plan/.*'),
+                           body=json.dumps({'id': 8,
+                                            'project_id': 1,
+                                            'name': 'old_test_plan'}),
+                           match_querystring=True)
     new_plan = project.plans.add(name='test_plan', milestone_id=7)
     expected = {
         "milestone_id": 7,
@@ -331,14 +312,17 @@ def test_add_plan(client, project):
 def test_add_run_to_plan(client, plan):
     base = re.escape(client.base_url)
 
-    httpretty.register_uri(
-        httpretty.POST,
-        re.compile(base + r'add_plan_entry/.*'),
-        body=json.dumps({'runs': [{'id': 8}]}),
-        match_querystring=True)
+    httpretty.register_uri(httpretty.POST,
+                           re.compile(base + r'add_plan_entry/.*'),
+                           body=json.dumps({'runs': [{'id': 8}]}),
+                           match_querystring=True)
 
-    run = Run(suite_id=14, milestone_id=15, name="test_run",
-        description="test description", case_ids=[1, 2], config_ids=[16])
+    run = Run(suite_id=14,
+              milestone_id=15,
+              name="test_run",
+              description="test description",
+              case_ids=[1, 2],
+              config_ids=[16])
     plan.add_run(run)
     expected = {
         "suite_id": 14,
@@ -364,11 +348,11 @@ def test_add_run_to_plan(client, plan):
 def test_add_result(client, run):
     base = re.escape(client.base_url)
 
-    httpretty.register_uri(
-        httpretty.POST,
-        re.compile(base + r'add_result/.*'),
-        body=json.dumps({'id': 5, 'status_id': 4}),
-        match_querystring=True)
+    httpretty.register_uri(httpretty.POST,
+                           re.compile(base + r'add_result/.*'),
+                           body=json.dumps({'id': 5,
+                                            'status_id': 4}),
+                           match_querystring=True)
     result = run.results.add(status_id=1, comment="test result comment")
     expected = {
         "assignedto_id": None,
@@ -384,18 +368,38 @@ def test_add_result(client, run):
     assert result.id == 5
 
 
-def test_add_result_to_case():
-    pass
+def test_add_case(client, suite):
+    base = re.escape(client.base_url)
+
+    httpretty.register_uri(httpretty.POST,
+                           re.compile(base + r'add_case/157'),
+                           body=json.dumps({'id': 8,
+                                            'project_id': 1,
+                                            'title': 'case'}),
+                           match_querystring=True)
+    new_case = suite.cases.add(title='test_case',
+                               milestone_id=7,
+                               description='test_case_description',
+                               section_id=157)
+    expected = {
+        "milestone_id": 7,
+        "description": 'test_case_description',
+        "title": "test_case"
+    }
+    result = json.loads(httpretty.last_request().body)
+    assert expected == result
+    assert type(new_case) is Case
+    assert new_case.id == 8
 
 
 def test_add_results_for_cases(client, suite, run):
     base = re.escape(client.base_url)
 
-    httpretty.register_uri(
-        httpretty.POST,
-        re.compile(base + r'add_results_for_cases/.*'),
-        body=json.dumps([{'id': 5, 'status_id': 4}]),
-        match_querystring=True)
+    httpretty.register_uri(httpretty.POST,
+                           re.compile(base + r'add_results_for_cases/.*'),
+                           body=json.dumps([{'id': 5,
+                                             'status_id': 4}]),
+                           match_querystring=True)
     cases = suite.cases()
     for case in cases[:-1]:
         case.add_result(status_id=1, comment="test result comment")
@@ -420,20 +424,18 @@ def test_add_results_for_cases(client, suite, run):
     assert new_results[0].id == 5
 
 
-@pytest.mark.parametrize('statuses', (
-    [200],
-    [429, 200],
-    [429, 429, 429, 429, 200],
-    pytest.mark.xfail([429, 429, 429, 429, 429, 200]),
-    pytest.mark.xfail([300]),
-    pytest.mark.xfail([400]),
-    pytest.mark.xfail([500]),
-))
+@pytest.mark.parametrize('statuses',
+                         ([200],
+                          [429, 200],
+                          [429, 429, 429, 429, 200],
+                          pytest.mark.xfail([429, 429, 429, 429, 429, 200]),
+                          pytest.mark.xfail([300]),
+                          pytest.mark.xfail([400]),
+                          pytest.mark.xfail([500]), ))
 def test_http_errors(api_mock, mocker, statuses):
-    client = Client(
-        base_url='http://testrail/',
-        username='user',
-        password='password')
+    client = Client(base_url='http://testrail/',
+                    username='user',
+                    password='password')
 
     def request_callback(request, uri, headers):
         status = statuses.pop(0)
@@ -441,11 +443,10 @@ def test_http_errors(api_mock, mocker, statuses):
 
     url = re.escape('http://testrail/index.php?/api/v2/get_projects')
 
-    httpretty.register_uri(
-        httpretty.GET,
-        re.compile(url),
-        body=request_callback,
-        match_querystring=True)
+    httpretty.register_uri(httpretty.GET,
+                           re.compile(url),
+                           body=request_callback,
+                           match_querystring=True)
 
     mocker.patch('time.sleep')
     client.projects()
