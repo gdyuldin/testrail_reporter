@@ -1,6 +1,28 @@
 Changelog
 =========
 
+0.4.2 (2016-04-08)
+------------------
+
+Fix
+~~~
+
+- Skip cases, which not suitable to template. [Georgy Dyuldin]
+
+  This patch adds checks for xUnit case **identification string** not
+  contains None. In case it contains - such results will be ignored, with
+  warning to log.
+
+- TestRail Cases creation. [Georgy Dyuldin]
+
+0.4.1 (2016-03-21)
+------------------
+
+Fix
+~~~
+
+- Removed hardcoded test plan name. [Georgy Dyuldin]
+
 0.4.0 (2016-03-21)
 ------------------
 
