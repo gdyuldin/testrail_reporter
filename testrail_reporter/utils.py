@@ -49,9 +49,13 @@ class CaseMapper(object):
         self.xunit_name_template = xunit_name_template
         self.testrail_name_template = testrail_name_template
 
-    def get_situable_cases(self, xunit_case, cases):
+    def get_suitable_cases(self, xunit_case, cases):
         xunit_dict = describe_xunit_case(xunit_case)
         xunit_id = self.xunit_name_template.format(**xunit_dict)
+        if 'None' in xunit_id:
+            logger.warning("Can't extract {template} from {case}".format(
+                template=self.xunit_name_template, case=xunit_case))
+            return []
 
         # Search symbols groups, which is absent in xunit_id
         split_symbols_base = [r'a-zA-Z', r'\(\)', r'\[\]', r',', ]
@@ -81,13 +85,13 @@ class CaseMapper(object):
 
         mapping = []
         for xunit_case in xunit_suite:
-            situable_cases = self.get_situable_cases(xunit_case,
+            suitable_cases = self.get_suitable_cases(xunit_case,
                                                      testrail_cases)
-            if len(situable_cases) == 0:
+            if len(suitable_cases) == 0:
                 logger.warning(
                     "xUnit case {0.classname}.{0.methodname} doesn't match "
                     "any TestRail Case".format(xunit_case))
-            for testrail_case in situable_cases:
+            for testrail_case in suitable_cases:
                 mapping.append((testrail_case, xunit_case))
 
         duplicated_xunit_cases = get_duplicates(mapping, 0)

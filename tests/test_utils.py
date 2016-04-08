@@ -71,7 +71,7 @@ def test_match_templates(x_tpl, tr_tpl, mapper, map_len, xcase_data,
 
     mapper.xunit_name_template = x_tpl
     mapper.testrail_name_template = tr_tpl
-    result = mapper.get_situable_cases(xunit_case, [case])
+    result = mapper.get_suitable_cases(xunit_case, [case])
     assert len(result) == map_len
 
 
@@ -97,8 +97,18 @@ def test_match_case(mapper, methodname, match_value, x_name_template,
     xunit_case = XunitCase(classname='a.b.C', methodname=methodname)
     case = Case(custom_report_label=match_value)
     mapper.xunit_name_template = x_name_template
-    result = mapper.get_situable_cases(xunit_case, [case])
+    result = mapper.get_suitable_cases(xunit_case, [case])
     assert len(result) == map_len
+
+
+def test_empty_xunit_id(mapper, caplog):
+    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+    xunit_case = XunitCase(classname='a.b.C', methodname='test_e[1]')
+    mapper.xunit_name_template = '{id}'
+    case = Case(custom_report_label=None)
+    result = mapper.get_suitable_cases(xunit_case, [case])
+    assert case not in result
+    assert str(xunit_case) in caplog.text()
 
 
 def check_mapping(result, expected_dict):
