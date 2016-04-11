@@ -30,7 +30,8 @@ def main():
         'XUNIT_REPORT': 'report.xml',
         'XUNIT_NAME_TEMPLATE': '{id}',
         'TESTRAIL_NAME_TEMPLATE': '{custom_report_label}',
-        'ISO_ID': '000',
+        'ISO_ID': '',
+        'TESTRAIL_PLAN_NAME': '',
         'ENV_DESCRIPTION': '',
         'TEST_RESULTS_LINK': '',
     }
@@ -55,10 +56,15 @@ def main():
                         type=str,
                         default=defaults['ENV_DESCRIPTION'],
                         help='env deploy type description (for TestRun name)')
+
     parser.add_argument('--iso-id',
-                        type=int,
+                        type=str,
                         default=defaults['ISO_ID'],
                         help='id of build Fuel iso')
+    parser.add_argument('--testrail-plan-name',
+                        type=str,
+                        default=defaults['TESTRAIL_PLAN_NAME'],
+                        help='name of test plan to be displayed in testrail')
     parser.add_argument('--test-results-link',
                         type=str,
                         default=defaults['TEST_RESULTS_LINK'],
@@ -117,6 +123,7 @@ def main():
                              password=args.testrail_password,
                              milestone=args.testrail_milestone,
                              project=args.testrail_project,
+                             plan_name=args.testrail_plan_name,
                              tests_suite=suite)
     reporter.execute()
 

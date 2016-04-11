@@ -30,21 +30,28 @@ class Reporter(object):
         self._config = {}
         self._cache = {}
         self.iso_id = iso_id
-        self.plan_description = '#{0.iso_id} tests'.format(self)
         self.xunit_report = xunit_report
         self.env_description = env_description
         self.test_results_link = test_results_link
         self.case_mapper = case_mapper
+
         super(Reporter, self).__init__(*args, **kwargs)
 
     def config_testrail(self, base_url, username, password, milestone, project,
-                        tests_suite):
+                        tests_suite, plan_name=None):
         self._config['testrail'] = dict(base_url=base_url,
                                         username=username,
                                         password=password, )
         self.milestone_name = milestone
         self.project_name = project
         self.tests_suite_name = tests_suite
+
+        if not plan_name and not self.iso_id:
+            raise AttributeError(
+                "--testrail-plan-name or --iso-id parameter must be indicated")
+        self.plan_name = plan_name
+        self.plan_description = '{plan_name} tests'.format(
+            plan_name=self.get_plan_name())
 
     @property
     def testrail_client(self):
@@ -81,7 +88,12 @@ class Reporter(object):
         return self.testrail_client.statuses
 
     def get_plan_name(self):
-        return '{0.milestone_name} iso #{0.iso_id}'.format(self)
+        if not self.plan_name:
+            logger.warn("--iso-id parameter is DEPRECATED. "
+                        "It is recommended to use --testrail-plan-name "
+                        "parameter.")
+            return '{0.milestone_name} iso #{0.iso_id}'.format(self)
+        return self.plan_name
 
     def get_or_create_plan(self):
         """Get exists or create new TestRail Plan"""
@@ -160,9 +172,10 @@ class Reporter(object):
 
     def create_test_run(self, plan, cases):
         suite_name = "{} ({})".format(self.suite.name, self.env_description)
-        description = ('Run **{suite}** on iso #{self.iso_id}. \n'
+        description = ('Run **{suite}** on #{plan_name}. \n'
                        '[Test results]({self.test_results_link})').format(
                            suite=suite_name,
+                           plan_name=self.get_plan_name(),
                            self=self)
         run = Run(name=suite_name,
                   description=description,

@@ -72,7 +72,9 @@ optional arguments:
                         template for TestRail cases to make id string
   --env-description ENV_DESCRIPTION
                         env deploy type description (for TestRun name)
-  --iso-id ISO_ID       id of build Fuel iso
+  --testrail-plan-name TESTRAIL_PLANE_NAME
+                        name of test plan to be displayed in testrail
+  --iso-id ISO_ID       id of build Fuel iso (DEPRECATED)
   --test-results-link TEST_RESULTS_LINK
                         link to test job results
   --testrail-url TESTRAIL_URL
