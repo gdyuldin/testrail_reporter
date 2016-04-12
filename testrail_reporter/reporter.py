@@ -37,7 +37,7 @@ class Reporter(object):
         super(Reporter, self).__init__(*args, **kwargs)
 
     def config_testrail(self, base_url, username, password, milestone, project,
-                        tests_suite, plan_name=None):
+                        tests_suite, plan_name):
         self._config['testrail'] = dict(base_url=base_url,
                                         username=username,
                                         password=password, )

@@ -10,6 +10,9 @@ from testrail_reporter import CaseMapper
 from testrail_reporter import Reporter
 
 
+warnings.simplefilter('always', DeprecationWarning)
+
+
 def filename(string):
     if not os.path.exists(string):
         msg = "%r is not exists" % string
@@ -31,8 +34,8 @@ def main():
         'XUNIT_REPORT': 'report.xml',
         'XUNIT_NAME_TEMPLATE': '{id}',
         'TESTRAIL_NAME_TEMPLATE': '{custom_report_label}',
-        'ISO_ID': '',
-        'TESTRAIL_PLAN_NAME': '',
+        'ISO_ID': None,
+        'TESTRAIL_PLAN_NAME': None,
         'ENV_DESCRIPTION': '',
         'TEST_RESULTS_LINK': '',
     }
@@ -58,7 +61,7 @@ def main():
                         default=defaults['ENV_DESCRIPTION'],
                         help='env deploy type description (for TestRun name)')
 
-    group = parser.add_mutually_exclusive_group()
+    group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--iso-id',
                         type=str,
                         default=defaults['ISO_ID'],

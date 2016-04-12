@@ -33,7 +33,8 @@ def reporter(testrail_client):
                              password="password",
                              milestone="0.1",
                              project="Test Project",
-                             tests_suite="Test Suite")
+                             tests_suite="Test Suite",
+                             plan_name="Plan name")
     return reporter
 
 
