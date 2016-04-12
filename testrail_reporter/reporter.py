@@ -25,26 +25,28 @@ def memoize(f):
 
 
 class Reporter(object):
-    def __init__(self, xunit_report, iso_id, env_description,
-                 test_results_link, case_mapper, *args, **kwargs):
+    def __init__(self, xunit_report, env_description, test_results_link,
+                 case_mapper, *args, **kwargs):
         self._config = {}
         self._cache = {}
-        self.iso_id = iso_id
-        self.plan_description = '#{0.iso_id} tests'.format(self)
         self.xunit_report = xunit_report
         self.env_description = env_description
         self.test_results_link = test_results_link
         self.case_mapper = case_mapper
+
         super(Reporter, self).__init__(*args, **kwargs)
 
     def config_testrail(self, base_url, username, password, milestone, project,
-                        tests_suite):
+                        tests_suite, plan_name):
         self._config['testrail'] = dict(base_url=base_url,
                                         username=username,
                                         password=password, )
         self.milestone_name = milestone
         self.project_name = project
         self.tests_suite_name = tests_suite
+        self.plan_name = plan_name
+        self.plan_description = '{plan_name} tests'.format(
+            plan_name=self.plan_name)
 
     @property
     def testrail_client(self):
@@ -80,20 +82,16 @@ class Reporter(object):
     def testrail_statuses(self):
         return self.testrail_client.statuses
 
-    def get_plan_name(self):
-        return '{0.milestone_name} iso #{0.iso_id}'.format(self)
-
     def get_or_create_plan(self):
         """Get exists or create new TestRail Plan"""
-        plan_name = self.get_plan_name()
-        plan = self.project.plans.find(name=plan_name)
+        plan = self.project.plans.find(name=self.plan_name)
         if plan is None:
-            plan = self.project.plans.add(name=plan_name,
+            plan = self.project.plans.add(name=self.plan_name,
                                           description=self.plan_description,
                                           milestone_id=self.milestone.id)
-            logger.debug('Created new plan "{}"'.format(plan_name))
+            logger.debug('Created new plan "{}"'.format(self.plan_name))
         else:
-            logger.debug('Founded plan "{}"'.format(plan_name))
+            logger.debug('Founded plan "{}"'.format(self.plan_name))
         return plan
 
     def get_xunit_test_suite(self):
@@ -160,9 +158,10 @@ class Reporter(object):
 
     def create_test_run(self, plan, cases):
         suite_name = "{} ({})".format(self.suite.name, self.env_description)
-        description = ('Run **{suite}** on iso #{self.iso_id}. \n'
+        description = ('Run **{suite}** on #{plan_name}. \n'
                        '[Test results]({self.test_results_link})').format(
                            suite=suite_name,
+                           plan_name=self.plan_name,
                            self=self)
         run = Run(name=suite_name,
                   description=description,

@@ -4,9 +4,13 @@ import argparse
 import logging
 import os
 import sys
+import warnings
 
 from testrail_reporter import CaseMapper
 from testrail_reporter import Reporter
+
+
+warnings.simplefilter('always', DeprecationWarning)
 
 
 def filename(string):
@@ -30,7 +34,8 @@ def main():
         'XUNIT_REPORT': 'report.xml',
         'XUNIT_NAME_TEMPLATE': '{id}',
         'TESTRAIL_NAME_TEMPLATE': '{custom_report_label}',
-        'ISO_ID': '000',
+        'ISO_ID': None,
+        'TESTRAIL_PLAN_NAME': None,
         'ENV_DESCRIPTION': '',
         'TEST_RESULTS_LINK': '',
     }
@@ -55,10 +60,17 @@ def main():
                         type=str,
                         default=defaults['ENV_DESCRIPTION'],
                         help='env deploy type description (for TestRun name)')
-    parser.add_argument('--iso-id',
-                        type=int,
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--iso-id',
+                        type=str,
                         default=defaults['ISO_ID'],
                         help='id of build Fuel iso')
+    group.add_argument('--testrail-plan-name',
+                        type=str,
+                        default=defaults['TESTRAIL_PLAN_NAME'],
+                        help='name of test plan to be displayed in testrail')
+
     parser.add_argument('--test-results-link',
                         type=str,
                         default=defaults['TEST_RESULTS_LINK'],
@@ -96,6 +108,14 @@ def main():
 
     args = parser.parse_args()
 
+    if not args.testrail_plan_name:
+        args.testrail_plan_name = ('{0.testrail_milestone} iso '
+                                   '#{0.iso_id}').format(args)
+
+        msg = ("--iso-id parameter is DEPRECATED. "
+               "It is recommended to use --testrail-plan-name parameter.")
+        warnings.warn(msg, DeprecationWarning)
+
     logger_dict = dict(stream=sys.stderr)
     if args.verbose:
         logger_dict['level'] = logging.DEBUG
@@ -107,7 +127,6 @@ def main():
         testrail_name_template=args.testrail_name_template)
 
     reporter = Reporter(xunit_report=args.xunit_report,
-                        iso_id=args.iso_id,
                         env_description=args.env_description,
                         test_results_link=args.test_results_link,
                         case_mapper=case_mapper)
@@ -117,6 +136,7 @@ def main():
                              password=args.testrail_password,
                              milestone=args.testrail_milestone,
                              project=args.testrail_project,
+                             plan_name=args.testrail_plan_name,
                              tests_suite=suite)
     reporter.execute()
 
