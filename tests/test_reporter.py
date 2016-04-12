@@ -26,7 +26,6 @@ def testrail_client(mocker):
 def reporter(testrail_client):
     reporter = Reporter(xunit_report='tests/xunit_files/report.xml',
                         env_description='vlan_ceph',
-                        iso_id=385,
                         test_results_link="http://test_job/",
                         case_mapper=None)
     reporter.config_testrail(base_url="https://testrail",
@@ -36,14 +35,6 @@ def reporter(testrail_client):
                              project="Test Project",
                              tests_suite="Test Suite")
     return reporter
-
-
-@pytest.mark.parametrize('milestone, iso, name',
-                         (('8.0', '123', '8.0 iso #123'), ))
-def test_plan_name(reporter, milestone, iso, name):
-    reporter.iso_id = iso
-    reporter.milestone_name = milestone
-    assert reporter.get_plan_name() == name
 
 
 def test_parse_report(reporter):
