@@ -4,6 +4,7 @@ import argparse
 import logging
 import os
 import sys
+import traceback
 import warnings
 
 from testrail_reporter import CaseMapper
@@ -144,6 +145,6 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except Exception, e:
-        print e
+    except Exception:
+        traceback.print_exc(file=sys.stdout)
         sys.exit(1)

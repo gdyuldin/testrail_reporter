@@ -78,7 +78,7 @@ def test_match_templates(x_tpl, tr_tpl, mapper, map_len, xcase_data,
 @pytest.mark.parametrize(
     'methodname, match_value, x_name_template, map_len',
     (('test_a', 'test_a', '{methodname}', 1),
-     ('test_a', 'test_b', '{methodname}', 0),
+     ('test_a', u'test_b\u2019', '{methodname}', 0),
      ('test_a', 'test_ab', '{methodname}', 0),
      ('test_ab', 'test_a', '{methodname}', 0),
      ('test_a[(12345)]', '12345', '{id}', 1),

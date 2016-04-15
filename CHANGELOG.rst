@@ -1,6 +1,38 @@
 Changelog
 =========
 
+0.4.3 (2016-04-15)
+------------------
+
+Fix
+~~~
+
+- Bug with UnicodeDecodeError on mapping. [Georgy Dyuldin]
+
+  This bug was appear if testrail cases contains non-ascii symbols in
+  matching fields.
+
+Other
+~~~~~
+
+- Merge pull request #1 from AlexGromov/test_plan_name_param. [Georgy
+  Dyuldin]
+
+  Test plan name param
+
+- Applying comments. [Alexander Gromov]
+
+- Applying comments. [Alexander Gromov]
+
+- Added --test-plan-name parameter. [Alexander Gromov]
+
+  Added --test-plan-name parameter so that we can manually set test plan
+  name without using --iso-id parameter. This way is considered to be more
+  common as we can use it to send reports for previous versions of MOS such
+  as MOS 8.0.
+
+  --iso-id parameter is considered to be DEPRECATED now.
+
 0.4.2 (2016-04-08)
 ------------------
 
