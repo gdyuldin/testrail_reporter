@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 
 import pytest
@@ -58,22 +59,23 @@ def test_print_run_url(reporter, mocker):
 
 
 @pytest.mark.parametrize(
-    'classname, methodname, job_url, expected_url',
-    (('a.b.c.TClass', 'test_method[2](1)', 'http://t_job/',
+    'classname, methodname, expected_url',
+    (('a.b.c.TClass', 'test_method[2](1)',
       'http://t_job/testReport/a.b.c/TClass/test_method_2__1_/'),
-     ('a.b.c.TClass', 'test_method[id-1]', 'http://t_job/',
+     ('a.b.c.TClass', 'test_method[id-1]',
       'http://t_job/testReport/a.b.c/TClass/test_method_id_1_/'),
-     ('a.b.c.TClass', 'test_method[a,b]', 'http://t_job/',
+     ('a.b.c.TClass', 'test_method[a,b]',
       'http://t_job/testReport/a.b.c/TClass/test_method_a_b_/'),
-     ('TClass', 'test_method[a,b]', 'http://t_job/',
+     ('TClass', 'test_method[a,b]',
       'http://t_job/testReport/(root)/TClass/test_method_a_b_/'),
-     ('TClass', 'test_method[AS,b]', 'http://t_job/',
+     ('TClass', 'test_method[AS,b]',
       'http://t_job/testReport/(root)/TClass/test_method_AS_b_/'), ))
-def test_get_jenkins_report_url(reporter, classname, methodname, job_url,
+def test_get_jenkins_report_url(reporter, classname, methodname,
                                 expected_url):
+
     from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
     xunit_case = XunitCase(classname=classname, methodname=methodname)
-    reporter.test_results_link = job_url
+    reporter.test_results_link = 'http://t_job/'
     assert expected_url == reporter.get_jenkins_report_url(xunit_case)
 
 
@@ -82,9 +84,10 @@ def test_add_result_to_case(reporter):
     testrail_case = Case()
     xunit_case = XunitCase(classname='a.TestClass', methodname='test_method')
     xunit_case.result = 'success'
-    xunit_case.message = None
+    xunit_case.message = u'успешно'
     xunit_case.time = datetime.timedelta(seconds=1)
     report_url = reporter.get_jenkins_report_url(xunit_case)
     reporter.add_result_to_case(testrail_case, xunit_case)
     assert report_url in testrail_case.result.comment
     assert reporter.env_description in testrail_case.result.comment
+    assert xunit_case.message in testrail_case.result.comment

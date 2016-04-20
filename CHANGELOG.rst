@@ -1,11 +1,13 @@
 Changelog
 =========
 
-0.4.3 (2016-04-15)
+0.4.3 (2016-04-20)
 ------------------
 
 Fix
 ~~~
+
+- UnicodeEncodeError on non-ascii xunit case message. [Georgy Dyuldin]
 
 - Bug with UnicodeDecodeError on mapping. [Georgy Dyuldin]
 

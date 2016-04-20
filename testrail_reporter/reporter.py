@@ -136,7 +136,7 @@ class Reporter(object):
         status_id = status_ids[0]
         test_result = xunit_case.message or 'Passed'
         report_url = self.get_jenkins_report_url(xunit_case)
-        comment = '{}\nEnv: **{}**\n[Details]({})'.format(
+        comment = u'{}\nEnv: **{}**\n[Details]({})'.format(
             test_result, self.env_description, report_url)
         elasped = int(xunit_case.time.total_seconds())
         if elasped > 0:
