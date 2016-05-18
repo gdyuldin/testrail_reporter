@@ -1,6 +1,17 @@
 Changelog
 =========
 
+0.4.4 (2016-05-18)
+------------------
+
+Fix
+~~~
+
+- Issue with '-id' strip on case. [Georgy Dyuldin]
+
+  In case matching group ends with any of symbol '-', 'i', 'd', this
+  symbols was removed from group. Now this behavior is fixed.
+
 0.4.3 (2016-04-20)
 ------------------
 

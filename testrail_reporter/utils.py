@@ -71,7 +71,7 @@ class CaseMapper(object):
             groups = [x for x in split_expr.split(testrail_id) if x]
             groups.reverse()
             for group in groups:
-                if group.strip('id-') == xunit_id:
+                if group == xunit_id:
                     match_cases.append(case)
         return match_cases
 
