@@ -70,8 +70,7 @@ def test_print_run_url(reporter, mocker):
       'http://t_job/testReport/(root)/TClass/test_method_a_b_/'),
      ('TClass', 'test_method[AS,b]',
       'http://t_job/testReport/(root)/TClass/test_method_AS_b_/'), ))
-def test_get_jenkins_report_url(reporter, classname, methodname,
-                                expected_url):
+def test_get_jenkins_report_url(reporter, classname, methodname, expected_url):
 
     from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
     xunit_case = XunitCase(classname=classname, methodname=methodname)
