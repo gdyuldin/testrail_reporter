@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import datetime
+import json
+import re
 
+import httpretty
 import pytest
 import six
 from six.moves import StringIO
@@ -46,6 +49,16 @@ def xunit_case():
     xunit_case.result = 'success'
     xunit_case.time = datetime.timedelta(seconds=1)
     return xunit_case
+
+
+@pytest.fixture
+def paste_api(api_mock):
+    paste_url = re.escape(
+        'http://paste.openstack.org/json/?method=pastes.newPaste')
+    httpretty.register_uri(httpretty.POST,
+                           re.compile(paste_url),
+                           body='{"data":"123"}',
+                           match_querystring=True)
 
 
 def test_parse_report(reporter):
@@ -106,3 +119,22 @@ def test_add_result_to_case(reporter, xunit_case):
 
 def test_no_trace_on_success_test_on_testrail(reporter, xunit_case):
     assert 'trace' not in reporter.gen_testrail_comment(xunit_case)
+
+
+def test_paste_result_link(reporter, xunit_case, paste_api):
+    link = reporter.save_to_paste(xunit_case)
+    assert link == "http://paste.openstack.org/show/123/"
+
+
+@pytest.mark.parametrize('prop, value', (('trace', "i'm trace"),
+                                         ('stdout', "i'm stdout"),
+                                         ('stderr', "i'm stderr"), ))
+def test_paste_store_data(reporter, xunit_case, paste_api, prop, value):
+    absent_props = ['trace', 'stdout', 'stderr']
+    absent_props.remove(prop)
+    setattr(xunit_case, prop, value)
+    reporter.save_to_paste(xunit_case)
+    payload = json.loads(httpretty.last_request().body)
+    assert value in payload['code']
+    for absent_prop in absent_props:
+        assert absent_prop not in payload['code']

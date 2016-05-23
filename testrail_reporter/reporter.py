@@ -5,11 +5,12 @@ import logging
 import re
 
 from jinja2 import Environment, PackageLoader
+import requests
 
 from .testrail import Client as TrClient
 from .testrail.client import Run
 from .vendor import xunitparser
-
+from .utils import truncate_head
 
 logger = logging.getLogger(__name__)
 
@@ -113,13 +114,59 @@ class Reporter(object):
             classname=classname,
             methodname=methodname)
 
+    def save_to_paste(self, xunit_case):
+        max_paste_size = 65535
+        chars_available = max_paste_size
+
+        code = ''
+
+        headers = {'trace': '### trace [python]\n',
+                   'stdout': '### stdout.log\n',
+                   'stderr': '### stderr.log\n'}
+
+        trace = getattr(xunit_case, 'trace', None)
+
+        if trace:
+            code = truncate_head(headers['trace'], trace, chars_available)
+            chars_available -= len(code) + 1
+
+        stderr = getattr(xunit_case, 'stderr', None)
+        if stderr:
+            stderr = truncate_head(headers['stderr'], stderr, chars_available)
+            chars_available -= len(stderr) + 1
+
+        stdout = getattr(xunit_case, 'stdout', None)
+        if stdout:
+            code += '\n' + truncate_head(headers['stdout'], stdout,
+                                         chars_available)
+
+        if stderr:
+            code += '\n' + stderr
+
+        r = requests.post(
+            'http://paste.openstack.org/json/?method=pastes.newPaste',
+            json={
+                'language': 'multi',
+                'code': code
+            })
+        paste_id = r.json().get('data')
+        if paste_id:
+            return 'http://paste.openstack.org/show/{}/'.format(paste_id)
+
     def gen_testrail_comment(self, xunit_case):
         template = self.env.get_template('testrail_comment.md')
         jenkins_url = self.get_jenkins_report_url(xunit_case)
+        paste_url = None
+        if not xunit_case.success:
+            try:
+                paste_url = self.save_to_paste(xunit_case)
+            except Exception as e:
+                logger.warning(e)
 
         return template.render(xunit_case=xunit_case,
                                env_description=self.env_description,
-                               jenkins_url=jenkins_url)
+                               jenkins_url=jenkins_url,
+                               paste_url=paste_url)
 
     def add_result_to_case(self, testrail_case, xunit_case):
         if xunit_case.success:
