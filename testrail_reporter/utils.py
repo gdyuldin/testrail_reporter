@@ -113,3 +113,12 @@ class CaseMapper(object):
                                                                xu_case))
             raise Exception("Can't map some testrail cases")
         return dict(mapping)
+
+
+def truncate_head(banner, text, max_len):
+    max_text_len = min(max_len - len(banner), len(text))
+    start = '...\n'
+    if max_text_len < len(text):
+        max_text_len -= len(start)
+        text = start + text[-max_text_len:]
+    return banner + text

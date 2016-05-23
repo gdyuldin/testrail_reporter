@@ -16,6 +16,7 @@ setup(
     install_requires=[
         'requests>=2.4.2',
         'pytest-runner',
+        'Jinja2',
     ],
     setup_requires=['setuptools_scm'],
     tests_require=[
