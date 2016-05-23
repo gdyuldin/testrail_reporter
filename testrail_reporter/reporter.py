@@ -4,6 +4,8 @@ from functools import wraps
 import logging
 import re
 
+from jinja2 import Environment, PackageLoader
+
 from .testrail import Client as TrClient
 from .testrail.client import Run
 from .vendor import xunitparser
@@ -33,6 +35,7 @@ class Reporter(object):
         self.env_description = env_description
         self.test_results_link = test_results_link
         self.case_mapper = case_mapper
+        self.env = Environment(loader=PackageLoader('testrail_reporter'))
 
         super(Reporter, self).__init__(*args, **kwargs)
 
@@ -110,15 +113,22 @@ class Reporter(object):
             classname=classname,
             methodname=methodname)
 
+    def gen_testrail_comment(self, xunit_case):
+        template = self.env.get_template('testrail_comment.md')
+        jenkins_url = self.get_jenkins_report_url(xunit_case)
+
+        return template.render(xunit_case=xunit_case,
+                               env_description=self.env_description,
+                               jenkins_url=jenkins_url)
+
     def add_result_to_case(self, testrail_case, xunit_case):
         if xunit_case.success:
             status_name = 'passed'
         elif xunit_case.failed:
             status_name = 'failed'
         elif xunit_case.skipped:
-            logger.debug(
-                'Case {0.classname}.{0.methodname} is skipped'.format(
-                    xunit_case))
+            logger.debug('Case {0.classname}.{0.methodname} is skipped'.format(
+                xunit_case))
             return
         elif xunit_case.errored:
             status_name = 'blocked'
@@ -134,10 +144,7 @@ class Reporter(object):
                 status_name, xunit_case.methodname))
             return
         status_id = status_ids[0]
-        test_result = xunit_case.message or 'Passed'
-        report_url = self.get_jenkins_report_url(xunit_case)
-        comment = u'{}\nEnv: **{}**\n[Details]({})'.format(
-            test_result, self.env_description, report_url)
+        comment = self.gen_testrail_comment(xunit_case)
         elasped = int(xunit_case.time.total_seconds())
         if elasped > 0:
             elasped = "{}s".format(elasped)
@@ -157,13 +164,13 @@ class Reporter(object):
         return cases
 
     def create_test_run(self, plan, cases):
-        suite_name = "{} ({})".format(self.suite.name, self.env_description)
-        description = ('Run **{suite}** on #{plan_name}. \n'
+        run_name = "{0.env_description} <{0.tests_suite_name}>".format(self)
+        description = ('Run **{run_name}** on #{plan_name}. \n'
                        '[Test results]({self.test_results_link})').format(
-                           suite=suite_name,
+                           run_name=run_name,
                            plan_name=self.plan_name,
                            self=self)
-        run = Run(name=suite_name,
+        run = Run(name=run_name,
                   description=description,
                   suite_id=self.suite.id,
                   milestone_id=self.milestone.id,

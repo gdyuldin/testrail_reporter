@@ -1,7 +1,10 @@
+from __future__ import absolute_import
 import logging
 import time
 
 import requests
+
+from .exceptions import NotFound
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +15,7 @@ requests_logger.setLevel(logging.WARNING)
 class ItemSet(list):
     def __init__(self, *args, **kwargs):
         self._item_class = None
-        return super(self.__class__, self).__init__(*args, **kwargs)
+        return super(ItemSet, self).__init__(*args, **kwargs)
 
     def find_all(self, **kwargs):
         filtered = ItemSet(x for x in self if
@@ -24,6 +27,8 @@ class ItemSet(list):
         items = self.find_all(**kwargs)
         if items:
             return items[0]
+        else:
+            raise NotFound(self._item_class, **kwargs)
 
 
 class Collection(object):
@@ -45,6 +50,7 @@ class Collection(object):
             if 'error' in items:
                 raise Exception(items)
             items = ItemSet(self._to_object(x) for x in items)
+            items._item_class = self._item_class
             return items
 
         else:

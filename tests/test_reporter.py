@@ -2,12 +2,12 @@
 import datetime
 
 import pytest
+import six
+from six.moves import StringIO
+
 from testrail_reporter import Reporter
 from testrail_reporter.testrail.client import Case
 from testrail_reporter.testrail.client import Plan
-
-import six
-from six.moves import StringIO
 
 if six.PY2:
     import mock
@@ -37,6 +37,15 @@ def reporter(testrail_client):
                              tests_suite="Test Suite",
                              plan_name="Plan name")
     return reporter
+
+
+@pytest.fixture
+def xunit_case():
+    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+    xunit_case = XunitCase(classname='a.TestClass', methodname='test_method')
+    xunit_case.result = 'success'
+    xunit_case.time = datetime.timedelta(seconds=1)
+    return xunit_case
 
 
 def test_parse_report(reporter):
@@ -78,15 +87,22 @@ def test_get_jenkins_report_url(reporter, classname, methodname, expected_url):
     assert expected_url == reporter.get_jenkins_report_url(xunit_case)
 
 
-def test_add_result_to_case(reporter):
-    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+def test_add_result_to_case(reporter, xunit_case):
     testrail_case = Case()
-    xunit_case = XunitCase(classname='a.TestClass', methodname='test_method')
-    xunit_case.result = 'success'
     xunit_case.message = u'успешно'
-    xunit_case.time = datetime.timedelta(seconds=1)
+    xunit_case.stderr = u'stderr message сообщение'
+    xunit_case.stdout = u'stdout message сообщение'
+    xunit_case.trace = u'trace сообщение'
     report_url = reporter.get_jenkins_report_url(xunit_case)
     reporter.add_result_to_case(testrail_case, xunit_case)
-    assert report_url in testrail_case.result.comment
-    assert reporter.env_description in testrail_case.result.comment
-    assert xunit_case.message in testrail_case.result.comment
+    comment = testrail_case.result.comment
+    assert report_url in comment
+    assert reporter.env_description in comment
+    assert xunit_case.message in comment
+    assert xunit_case.stderr not in comment
+    assert xunit_case.stdout not in comment
+    assert xunit_case.trace in comment
+
+
+def test_no_trace_on_success_test_on_testrail(reporter, xunit_case):
+    assert 'trace' not in reporter.gen_testrail_comment(xunit_case)

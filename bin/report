@@ -66,7 +66,7 @@ def main():
     group.add_argument('--iso-id',
                         type=str,
                         default=defaults['ISO_ID'],
-                        help='id of build Fuel iso')
+                        help='id of build Fuel iso (DEPRECATED)')
     group.add_argument('--testrail-plan-name',
                         type=str,
                         default=defaults['TESTRAIL_PLAN_NAME'],

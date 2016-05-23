@@ -41,16 +41,13 @@ TestRail template may looks like `'{custom_report_label}'` or `'{custom_test_gro
 
 If one xUnit case matches to more than one TestRail case or one TestRail case matches to more than one xUnit case - reporter stops work, print out this cases and exits with error.
 
-## Creating cases from xUnit
-
-Reporter can create cases in TestRail Suite, which is exists in xUnix XML file, but absent in TestRail. If `--create-cases` are passed as arguments, reporter search new xUnit cases and ask user to confirm addition.
-
 ## Usage
 
 ```
 usage: report [-h] [--xunit-name-template XUNIT_NAME_TEMPLATE]
               [--testrail-name-template TESTRAIL_NAME_TEMPLATE]
-              [--env-description ENV_DESCRIPTION] [--iso-id ISO_ID]
+              [--env-description ENV_DESCRIPTION]
+              (--iso-id ISO_ID | --testrail-plan-name TESTRAIL_PLAN_NAME)
               [--test-results-link TEST_RESULTS_LINK]
               [--testrail-url TESTRAIL_URL] [--testrail-user TESTRAIL_USER]
               [--testrail-password TESTRAIL_PASSWORD]
@@ -72,9 +69,9 @@ optional arguments:
                         template for TestRail cases to make id string
   --env-description ENV_DESCRIPTION
                         env deploy type description (for TestRun name)
-  --testrail-plan-name TESTRAIL_PLANE_NAME
-                        name of test plan to be displayed in testrail
   --iso-id ISO_ID       id of build Fuel iso (DEPRECATED)
+  --testrail-plan-name TESTRAIL_PLAN_NAME
+                        name of test plan to be displayed in testrail
   --test-results-link TEST_RESULTS_LINK
                         link to test job results
   --testrail-url TESTRAIL_URL
