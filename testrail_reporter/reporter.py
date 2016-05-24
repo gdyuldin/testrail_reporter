@@ -9,6 +9,7 @@ import requests
 
 from .testrail import Client as TrClient
 from .testrail.client import Run
+from .testrail.exceptions import NotFound
 from .vendor import xunitparser
 from .utils import truncate_head
 
@@ -88,8 +89,9 @@ class Reporter(object):
 
     def get_or_create_plan(self):
         """Get exists or create new TestRail Plan"""
-        plan = self.project.plans.find(name=self.plan_name)
-        if plan is None:
+        try:
+            plan = self.project.plans.find(name=self.plan_name)
+        except NotFound:
             plan = self.project.plans.add(name=self.plan_name,
                                           description=self.plan_description,
                                           milestone_id=self.milestone.id)
