@@ -14,15 +14,7 @@ from testrail_reporter.testrail.client import Result
 from testrail_reporter.testrail.client import Run
 from testrail_reporter.testrail.client import Test as TrTest
 from testrail_reporter.testrail.client import Suite
-
-
-@pytest.yield_fixture
-def api_mock():
-    httpretty.enable()
-    httpretty.HTTPretty.allow_net_connect = False
-    yield
-    httpretty.disable()
-    httpretty.reset()
+from testrail_reporter.testrail.exceptions import NotFound
 
 
 def _testrail_callback(data_kind):
@@ -283,8 +275,8 @@ def test_find(suite):
 
 
 def test_unsuccess_find(suite):
-    case = suite.cases.find(title='case title1')
-    assert case is None
+    with pytest.raises(NotFound):
+        suite.cases.find(title='case title1')
 
 
 def test_add_plan(client, project):

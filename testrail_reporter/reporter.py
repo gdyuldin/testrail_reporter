@@ -4,10 +4,14 @@ from functools import wraps
 import logging
 import re
 
+from jinja2 import Environment, PackageLoader
+import requests
+
 from .testrail import Client as TrClient
 from .testrail.client import Run
+from .testrail.exceptions import NotFound
 from .vendor import xunitparser
-
+from .utils import truncate_head
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +37,7 @@ class Reporter(object):
         self.env_description = env_description
         self.test_results_link = test_results_link
         self.case_mapper = case_mapper
+        self.env = Environment(loader=PackageLoader('testrail_reporter'))
 
         super(Reporter, self).__init__(*args, **kwargs)
 
@@ -84,8 +89,9 @@ class Reporter(object):
 
     def get_or_create_plan(self):
         """Get exists or create new TestRail Plan"""
-        plan = self.project.plans.find(name=self.plan_name)
-        if plan is None:
+        try:
+            plan = self.project.plans.find(name=self.plan_name)
+        except NotFound:
             plan = self.project.plans.add(name=self.plan_name,
                                           description=self.plan_description,
                                           milestone_id=self.milestone.id)
@@ -110,15 +116,68 @@ class Reporter(object):
             classname=classname,
             methodname=methodname)
 
+    def save_to_paste(self, xunit_case):
+        max_paste_size = 65535
+        chars_available = max_paste_size
+
+        code = ''
+
+        headers = {'trace': '### trace [python]\n',
+                   'stdout': '### stdout.log\n',
+                   'stderr': '### stderr.log\n'}
+
+        trace = getattr(xunit_case, 'trace', None)
+
+        if trace:
+            code = truncate_head(headers['trace'], trace, chars_available)
+            chars_available -= len(code) + 1
+
+        stderr = getattr(xunit_case, 'stderr', None)
+        if stderr:
+            stderr = truncate_head(headers['stderr'], stderr, chars_available)
+            chars_available -= len(stderr) + 1
+
+        stdout = getattr(xunit_case, 'stdout', None)
+        if stdout:
+            code += '\n' + truncate_head(headers['stdout'], stdout,
+                                         chars_available)
+
+        if stderr:
+            code += '\n' + stderr
+
+        r = requests.post(
+            'http://paste.openstack.org/json/?method=pastes.newPaste',
+            json={
+                'language': 'multi',
+                'code': code
+            })
+        paste_id = r.json().get('data')
+        if paste_id:
+            return 'http://paste.openstack.org/show/{}/'.format(paste_id)
+
+    def gen_testrail_comment(self, xunit_case):
+        template = self.env.get_template('testrail_comment.md')
+        jenkins_url = self.get_jenkins_report_url(xunit_case)
+        paste_url = None
+        if not xunit_case.success:
+            try:
+                paste_url = self.save_to_paste(xunit_case)
+            except Exception as e:
+                logger.warning(e)
+
+        return template.render(xunit_case=xunit_case,
+                               env_description=self.env_description,
+                               jenkins_url=jenkins_url,
+                               paste_url=paste_url)
+
     def add_result_to_case(self, testrail_case, xunit_case):
         if xunit_case.success:
             status_name = 'passed'
         elif xunit_case.failed:
             status_name = 'failed'
         elif xunit_case.skipped:
-            logger.debug(
-                'Case {0.classname}.{0.methodname} is skipped'.format(
-                    xunit_case))
+            logger.debug('Case {0.classname}.{0.methodname} is skipped'.format(
+                xunit_case))
             return
         elif xunit_case.errored:
             status_name = 'blocked'
@@ -134,10 +193,7 @@ class Reporter(object):
                 status_name, xunit_case.methodname))
             return
         status_id = status_ids[0]
-        test_result = xunit_case.message or 'Passed'
-        report_url = self.get_jenkins_report_url(xunit_case)
-        comment = u'{}\nEnv: **{}**\n[Details]({})'.format(
-            test_result, self.env_description, report_url)
+        comment = self.gen_testrail_comment(xunit_case)
         elasped = int(xunit_case.time.total_seconds())
         if elasped > 0:
             elasped = "{}s".format(elasped)
@@ -157,13 +213,13 @@ class Reporter(object):
         return cases
 
     def create_test_run(self, plan, cases):
-        suite_name = "{} ({})".format(self.suite.name, self.env_description)
-        description = ('Run **{suite}** on #{plan_name}. \n'
+        run_name = "{0.env_description} <{0.tests_suite_name}>".format(self)
+        description = ('Run **{run_name}** on #{plan_name}. \n'
                        '[Test results]({self.test_results_link})').format(
-                           suite=suite_name,
+                           run_name=run_name,
                            plan_name=self.plan_name,
                            self=self)
-        run = Run(name=suite_name,
+        run = Run(name=run_name,
                   description=description,
                   suite_id=self.suite.id,
                   milestone_id=self.milestone.id,

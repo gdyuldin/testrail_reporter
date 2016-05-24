@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 import datetime
+import json
+import re
 
+import httpretty
 import pytest
+import six
+from six.moves import StringIO
+
 from testrail_reporter import Reporter
 from testrail_reporter.testrail.client import Case
 from testrail_reporter.testrail.client import Plan
-
-import six
-from six.moves import StringIO
 
 if six.PY2:
     import mock
@@ -37,6 +40,25 @@ def reporter(testrail_client):
                              tests_suite="Test Suite",
                              plan_name="Plan name")
     return reporter
+
+
+@pytest.fixture
+def xunit_case():
+    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+    xunit_case = XunitCase(classname='a.TestClass', methodname='test_method')
+    xunit_case.result = 'success'
+    xunit_case.time = datetime.timedelta(seconds=1)
+    return xunit_case
+
+
+@pytest.fixture
+def paste_api(api_mock):
+    paste_url = re.escape(
+        'http://paste.openstack.org/json/?method=pastes.newPaste')
+    httpretty.register_uri(httpretty.POST,
+                           re.compile(paste_url),
+                           body='{"data":"123"}',
+                           match_querystring=True)
 
 
 def test_parse_report(reporter):
@@ -78,15 +100,41 @@ def test_get_jenkins_report_url(reporter, classname, methodname, expected_url):
     assert expected_url == reporter.get_jenkins_report_url(xunit_case)
 
 
-def test_add_result_to_case(reporter):
-    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+def test_add_result_to_case(reporter, xunit_case):
     testrail_case = Case()
-    xunit_case = XunitCase(classname='a.TestClass', methodname='test_method')
-    xunit_case.result = 'success'
     xunit_case.message = u'успешно'
-    xunit_case.time = datetime.timedelta(seconds=1)
+    xunit_case.stderr = u'stderr message сообщение'
+    xunit_case.stdout = u'stdout message сообщение'
+    xunit_case.trace = u'trace сообщение'
     report_url = reporter.get_jenkins_report_url(xunit_case)
     reporter.add_result_to_case(testrail_case, xunit_case)
-    assert report_url in testrail_case.result.comment
-    assert reporter.env_description in testrail_case.result.comment
-    assert xunit_case.message in testrail_case.result.comment
+    comment = testrail_case.result.comment
+    assert report_url in comment
+    assert reporter.env_description in comment
+    assert xunit_case.message in comment
+    assert xunit_case.stderr not in comment
+    assert xunit_case.stdout not in comment
+    assert xunit_case.trace in comment
+
+
+def test_no_trace_on_success_test_on_testrail(reporter, xunit_case):
+    assert 'trace' not in reporter.gen_testrail_comment(xunit_case)
+
+
+def test_paste_result_link(reporter, xunit_case, paste_api):
+    link = reporter.save_to_paste(xunit_case)
+    assert link == "http://paste.openstack.org/show/123/"
+
+
+@pytest.mark.parametrize('prop, value', (('trace', "i'm trace"),
+                                         ('stdout', "i'm stdout"),
+                                         ('stderr', "i'm stderr"), ))
+def test_paste_store_data(reporter, xunit_case, paste_api, prop, value):
+    absent_props = ['trace', 'stdout', 'stderr']
+    absent_props.remove(prop)
+    setattr(xunit_case, prop, value)
+    reporter.save_to_paste(xunit_case)
+    payload = json.loads(httpretty.last_request().body)
+    assert value in payload['code']
+    for absent_prop in absent_props:
+        assert absent_prop not in payload['code']

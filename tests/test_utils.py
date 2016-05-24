@@ -4,6 +4,7 @@ from testrail_reporter.testrail.client import Case
 from testrail_reporter.utils import find_id
 from testrail_reporter.utils import find_uuid
 from testrail_reporter.utils import CaseMapper
+from testrail_reporter.utils import truncate_head
 
 xfail = pytest.mark.xfail
 
@@ -192,3 +193,12 @@ def test_no_testrail_case_logging(mapper, caplog):
     mapper.map([xunit_case], [testrail_case])
     expected = "{0.classname}.{0.methodname} doesn't match".format(xunit_case)
     assert expected in caplog.text()
+
+
+@pytest.mark.parametrize('banner, text, max_length, expected',
+                         (
+                          ('foo\n', 'bar and bar', 15, 'foo\nbar and bar'),
+                          ('foo\n', 'bar and bar', 14, 'foo\n...\nnd bar'),
+                          ))
+def test_truncate_head(banner, text, max_length, expected):
+    assert truncate_head(banner, text, max_length) == expected
