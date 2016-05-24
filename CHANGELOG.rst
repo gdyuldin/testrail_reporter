@@ -1,6 +1,27 @@
 Changelog
 =========
 
+0.5.0 (2016-05-24)
+------------------
+
+New
+~~~
+
+- Add storing test info to paste.openstack.org. [Georgy Dyuldin]
+
+  Now test traceback, stdout log, stderr log storing on
+  paste.openstack.org in case test failed or errored.
+
+- TestRail report comment format with template. [Georgy Dyuldin]
+
+  This template show trace direct on TestRail comment message.
+
+Fix
+~~~
+
+- Reporter plan creating. [Georgy Dyuldin]
+
+
 0.4.4 (2016-05-18)
 ------------------
 
