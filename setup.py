@@ -11,6 +11,7 @@ setup(
     author='Georgy Dyuldin',
     author_email='gdyuldin@mirantis.com',
     packages=find_packages(),
+    package_data={'': ['templates/*']},
     scripts=['bin/report'],
     url="https://github.com/gdyuldin/testrail_reporter",
     install_requires=[

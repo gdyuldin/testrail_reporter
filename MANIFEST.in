@@ -1,0 +1,7 @@
+include setup.py
+include setup.cfg
+include README.md
+include CHANGELOG.rst
+include tox.ini
+recursive-include testrail_reporter *.py
+recursive-include testrail_reporter/templates *
