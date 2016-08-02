@@ -100,6 +100,10 @@ def main():
                         type=str,
                         default=defaults['TESTRAIL_TEST_SUITE'],
                         help='testrail project suite name')
+    parser.add_argument('--send-skipped',
+                        action='store_true',
+                        default=False,
+                        help='send skipped cases to testrail')
 
     parser.add_argument('--verbose',
                         '-v',
@@ -138,7 +142,8 @@ def main():
                              milestone=args.testrail_milestone,
                              project=args.testrail_project,
                              plan_name=args.testrail_plan_name,
-                             tests_suite=suite)
+                             tests_suite=suite,
+                             send_skipped=args.send_skipped)
     reporter.execute()
 
 

@@ -20,7 +20,7 @@ else:
 
 @pytest.fixture
 def testrail_client(mocker):
-    fake_statuses = mock.PropertyMock(return_value={1: 'passed'})
+    fake_statuses = mock.PropertyMock(return_value={1: 'passed', 2: 'skipped'})
     mocker.patch('testrail_reporter.reporter.TrClient.statuses',
                  new_callable=fake_statuses)
     return
@@ -48,6 +48,12 @@ def xunit_case():
     xunit_case = XunitCase(classname='a.TestClass', methodname='test_method')
     xunit_case.result = 'success'
     xunit_case.time = datetime.timedelta(seconds=1)
+    return xunit_case
+
+
+@pytest.fixture
+def xunit_case_skipped(xunit_case):
+    xunit_case.result = 'skipped'
     return xunit_case
 
 
@@ -115,6 +121,14 @@ def test_add_result_to_case(reporter, xunit_case):
     assert xunit_case.stderr not in comment
     assert xunit_case.stdout not in comment
     assert xunit_case.trace in comment
+
+
+@pytest.mark.parametrize('send_skipped', [True, False])
+def test_send_skipped_param(reporter, xunit_case_skipped, send_skipped):
+    reporter.send_skipped = send_skipped
+    testrail_case = Case()
+    reporter.add_result_to_case(testrail_case, xunit_case_skipped)
+    assert send_skipped == (testrail_case.result is not None)
 
 
 def test_no_trace_on_success_test_on_testrail(reporter, xunit_case):
