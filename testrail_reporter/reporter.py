@@ -42,7 +42,7 @@ class Reporter(object):
         super(Reporter, self).__init__(*args, **kwargs)
 
     def config_testrail(self, base_url, username, password, milestone, project,
-                        tests_suite, plan_name):
+                        tests_suite, plan_name, send_skipped=False):
         self._config['testrail'] = dict(base_url=base_url,
                                         username=username,
                                         password=password, )
@@ -52,6 +52,7 @@ class Reporter(object):
         self.plan_name = plan_name
         self.plan_description = '{plan_name} tests'.format(
             plan_name=self.plan_name)
+        self.send_skipped = send_skipped
 
     @property
     def testrail_client(self):
@@ -176,17 +177,19 @@ class Reporter(object):
         elif xunit_case.failed:
             status_name = 'failed'
         elif xunit_case.skipped:
-            logger.debug('Case {0.classname}.{0.methodname} is skipped'.format(
-                xunit_case))
-            return
+            if self.send_skipped:
+                status_name = 'skipped'
+            else:
+                logger.debug('Case {0.classname}.{0.methodname} '
+                             'is skipped'.format(xunit_case))
+                return
         elif xunit_case.errored:
             status_name = 'blocked'
         else:
             logger.warning('Unknown xunit case {} status {}'.format(
                 xunit_case.methodname, xunit_case.result))
             return
-        status_ids = [k
-                      for k, v in self.testrail_statuses.items()
+        status_ids = [k for k, v in self.testrail_statuses.items()
                       if v == status_name]
         if len(status_ids) == 0:
             logger.warning("Can't find status {} for result {}".format(

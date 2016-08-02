@@ -53,7 +53,7 @@ usage: report [-h] [--xunit-name-template XUNIT_NAME_TEMPLATE]
               [--testrail-password TESTRAIL_PASSWORD]
               [--testrail-project TESTRAIL_PROJECT]
               [--testrail-milestone TESTRAIL_MILESTONE]
-              [--testrail-suite TESTRAIL_SUITE] [--verbose]
+              [--testrail-suite TESTRAIL_SUITE] [--send-skipped] [--verbose]
               xunit_report
 
 Report to testrail
@@ -86,5 +86,6 @@ optional arguments:
                         testrail project milestone
   --testrail-suite TESTRAIL_SUITE
                         testrail project suite name
+  --send-skipped        send skipped cases to testrail
   --verbose, -v         Verbose mode
 ```

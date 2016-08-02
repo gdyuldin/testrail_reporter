@@ -1,6 +1,19 @@
 Changelog
 =========
 
+0.5.1 (2016-08-02)
+------------------
+
+New
+~~~
+
+- Add `--send-skipped` flag to reporter. [Georgy Dyuldin]
+
+Fix
+~~~
+
+- Add templates to sdist and install. [Georgy Dyuldin]
+
 0.5.0 (2016-05-24)
 ------------------
 
@@ -21,6 +34,14 @@ Fix
 
 - Reporter plan creating. [Georgy Dyuldin]
 
+Other
+~~~~~
+
+- Merge pull request #3 from gdyuldin/paste. [Georgy Dyuldin]
+
+- Merge pull request #2 from gdyuldin/paste. [Georgy Dyuldin]
+
+  New template for testrail comment and storing results on paste.openstack.org
 
 0.4.4 (2016-05-18)
 ------------------
