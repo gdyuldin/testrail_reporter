@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function
 from functools import wraps
 import logging
 import re
+from six.moves.urllib import parse
 
 from jinja2 import Environment, PackageLoader
 import requests
@@ -30,13 +31,14 @@ def memoize(f):
 
 class Reporter(object):
     def __init__(self, xunit_report, env_description, test_results_link,
-                 case_mapper, *args, **kwargs):
+                 case_mapper, paste_url, *args, **kwargs):
         self._config = {}
         self._cache = {}
         self.xunit_report = xunit_report
         self.env_description = env_description
         self.test_results_link = test_results_link
         self.case_mapper = case_mapper
+        self.paste_url = paste_url
         self.env = Environment(loader=PackageLoader('testrail_reporter'))
 
         super(Reporter, self).__init__(*args, **kwargs)
@@ -147,14 +149,14 @@ class Reporter(object):
             code += '\n' + stderr
 
         r = requests.post(
-            'http://paste.openstack.org/json/?method=pastes.newPaste',
+            parse.urljoin(self.paste_url, '/json/?method=pastes.newPaste'),
             json={
                 'language': 'multi',
                 'code': code
             })
         paste_id = r.json().get('data')
         if paste_id:
-            return 'http://paste.openstack.org/show/{}/'.format(paste_id)
+            return parse.urljoin(self.paste_url, '/show/{}/'.format(paste_id))
 
     def gen_testrail_comment(self, xunit_case):
         template = self.env.get_template('testrail_comment.md')

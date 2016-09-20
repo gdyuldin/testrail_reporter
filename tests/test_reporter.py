@@ -31,7 +31,8 @@ def reporter(testrail_client):
     reporter = Reporter(xunit_report='tests/xunit_files/report.xml',
                         env_description='vlan_ceph',
                         test_results_link="http://test_job/",
-                        case_mapper=None)
+                        case_mapper=None,
+                        paste_url='http://example.com/')
     reporter.config_testrail(base_url="https://testrail",
                              username="user",
                              password="password",
@@ -60,7 +61,7 @@ def xunit_case_skipped(xunit_case):
 @pytest.fixture
 def paste_api(api_mock):
     paste_url = re.escape(
-        'http://paste.openstack.org/json/?method=pastes.newPaste')
+        'http://example.com/json/?method=pastes.newPaste')
     httpretty.register_uri(httpretty.POST,
                            re.compile(paste_url),
                            body='{"data":"123"}',
@@ -137,7 +138,7 @@ def test_no_trace_on_success_test_on_testrail(reporter, xunit_case):
 
 def test_paste_result_link(reporter, xunit_case, paste_api):
     link = reporter.save_to_paste(xunit_case)
-    assert link == "http://paste.openstack.org/show/123/"
+    assert link == "http://example.com/show/123/"
 
 
 @pytest.mark.parametrize('prop, value', (('trace', "i'm trace"),

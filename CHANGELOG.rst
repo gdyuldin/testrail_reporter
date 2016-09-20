@@ -1,6 +1,17 @@
 Changelog
 =========
 
+0.5.2 (2016-09-20)
+------------------
+
+New
+~~~
+
+- Add '--paste-url' parameter to reporter arguments. [Georgy Dyuldin]
+
+  This parameter allow to override default paste (lodgeit) service to
+  store logs and traces to.
+
 0.5.1 (2016-08-02)
 ------------------
 
