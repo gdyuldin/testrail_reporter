@@ -39,6 +39,7 @@ def main():
         'TESTRAIL_PLAN_NAME': None,
         'ENV_DESCRIPTION': '',
         'TEST_RESULTS_LINK': '',
+        'PASTE_BASE_URL': 'http://srv99-bud.infra.mirantis.net:5000/'
     }
     defaults = {k: os.environ.get(k, v) for k, v in defaults.items()}
 
@@ -104,6 +105,10 @@ def main():
                         action='store_true',
                         default=False,
                         help='send skipped cases to testrail')
+    parser.add_argument('--paste-url',
+                        type=str,
+                        default=defaults['PASTE_BASE_URL'],
+                        help='paste service to send test case logs and trace')
 
     parser.add_argument('--verbose',
                         '-v',
@@ -134,7 +139,8 @@ def main():
     reporter = Reporter(xunit_report=args.xunit_report,
                         env_description=args.env_description,
                         test_results_link=args.test_results_link,
-                        case_mapper=case_mapper)
+                        case_mapper=case_mapper,
+                        paste_url=args.paste_url)
     suite = args.testrail_suite.format(args)
     reporter.config_testrail(base_url=args.testrail_url,
                              username=args.testrail_user,
