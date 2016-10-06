@@ -15,6 +15,7 @@ setup(
     scripts=['bin/report'],
     url="https://github.com/gdyuldin/testrail_reporter",
     install_requires=[
+        'setuptools>=17.1',
         'requests>=2.4.2',
         'pytest-runner',
         'Jinja2',
