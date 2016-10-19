@@ -1,13 +1,19 @@
 language: python
 python:
-  - "2.7"
+- '2.7'
 env:
-  - TOX_ENV=py27
-  - TOX_ENV=static_check
+- TOX_ENV=py27
+- TOX_ENV=static_check
 install:
-  - pip install tox coverage
+- pip install tox coverage
 script:
-  - tox -e $TOX_ENV
-
+- tox -e $TOX_ENV
 after_success:
-  - bash <(curl -s https://codecov.io/bash) -f '!./tests/*'
+- bash <(curl -s https://codecov.io/bash) -f '!./tests/*'
+deploy:
+  provider: pypi
+  user: 1tush
+  password:
+    secure: bRwDO1wjSuRRR/yaSdXLj2jnkych/zZHqPGKbDN/mfLrzu4iMzMuvv4mKWPyBHFWdn20cJzleRPC4k0M9LUCbIM5CM6Zk3kgyNYtxiIb6WoViRB/s9UG5OBpAKIpBS1jH8H1/lg9HQb3a3i17PFgjBSWXqgC8Q4RQaPMc2EIUXbQvAIGaIm36v1nTKZKjKS3CpWMumJPbjC0tAW+hlx1hOYoGcAG8ZB+IN8L/Rbga04GMa50UNtqZ+6rj1g5dhmc6oUJQvvg49z4qRBn7kuRyOgsxK5XXSfU90/GINEf5a2svaltQYVupKbDuIwc8wTJMvvqJbP+AjVoBCw+p657FVopyeqOec7H/gA0OVUIztFQGNfTYaGC50V0IXcKYQQSXbRF8UV7S0KH4OWZtuL69l/E7Gw1GV2IGvphZx8jZ1SF9wE/F+HQKy+QnIHMDXi5gJ/eWzUE18OQXdWMTx/I9gc/XGj1D7Fj6jGHJqXEZaEiMKN+nGwXnBsYSD1n/y33gE6fL8ucbkzDsDBugyQjKMh/MKK0Mp6IGX49NJJGcCLzEKKjqpxU53u8vOvTu6N4o1qIJJFGFwqfiuBUbIU8fkYf31sR5OrMTLVAxF8GPHOspEjmvS9lmgxpebPz0ZJgPQqzi0/1zV8e8xtEixhq6abMfxIVCUNnpVhykgMZlqY=
+  on:
+    tags: true
