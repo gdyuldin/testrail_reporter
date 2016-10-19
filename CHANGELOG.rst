@@ -1,6 +1,25 @@
 Changelog
 =========
 
+0.5.3 (2016-10-19)
+------------------
+
+Fix
+~~~
+
+- Add setuptools version to fix pbr issue. [Georgy Dyuldin]
+
+  http://docs.openstack.org/developer/pbr/compatibility.html#evaluate-marker
+
+- Add six to requirements. [Georgy Dyuldin]
+
+Other
+~~~~~
+
+- Add PyPI deploy on travis. [Georgy Dyuldin]
+
+- Add codecov.io. [Georgy Dyuldin]
+
 0.5.2 (2016-09-20)
 ------------------
 
