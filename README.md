@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/gdyuldin/testrail_reporter.svg?branch=master)](https://travis-ci.org/gdyuldin/testrail_reporter)
 
+[![codecov](https://codecov.io/gh/gdyuldin/testrail_reporter/branch/master/graph/badge.svg)](https://codecov.io/gh/gdyuldin/testrail_reporter)
+
 This reporter helps to send xUnit XML report from automated tests to TestRail.
 
 ## Matching rules
