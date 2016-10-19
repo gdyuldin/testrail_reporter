@@ -1,6 +1,19 @@
 Changelog
 =========
 
+0.6.0 (2016-10-19)
+------------------
+
+New
+~~~
+
+- Switch to `bumpversion` [Georgy Dyuldin]
+
+Other
+~~~~~
+
+- Update CHANGELOG.rst. [Georgy Dyuldin]
+
 0.5.3 (2016-10-19)
 ------------------
 
@@ -15,6 +28,8 @@ Fix
 
 Other
 ~~~~~
+
+- Update CHANGELOG.rst. [Georgy Dyuldin]
 
 - Add PyPI deploy on travis. [Georgy Dyuldin]
 

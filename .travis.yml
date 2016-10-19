@@ -1,19 +1,28 @@
 language: python
 python:
 - '2.7'
-env:
-- TOX_ENV=py27
-- TOX_ENV=static_check
 install:
 - pip install tox coverage
 script:
-- tox -e $TOX_ENV
+- tox
 after_success:
 - bash <(curl -s https://codecov.io/bash) -f '!./tests/*'
 deploy:
-  provider: pypi
-  user: 1tush
-  password:
-    secure: TCCfFw2Qx+QiyNtk5bM8kJtu+/WwaoO51jIWu38kFhziIwUnJptiHa35mt5nU0srQom7fiMHCZT4ShiFlegNuDl6ccQt92EpRhpyEHuR72BkM2zSYVC5MkFWCEx3VdpcIOXeDjItr62yhd3wfc6EVngjYOsPC1er2xgSRF+LYXKjNQK0CGlYDkKzZ0V+Cyj4DiXUUpaeNEMKuyjaME7Zcpyc8zX1ju04ocB00ig/jQ6M6/xZwoylUu9XksxjHPaamEVZP1ijXDPKPQxFJbHzdLQDE7IL9sMor10pUpmTt/ksGaweHcGnDUOmp4cKWQ8zBjWRUK8LrByyf4ohsdgBnmaTzgYnHBoxdzPYK+04o2ovvvxRBZ3E2bk8YRxLl0YCpHnCZgfqlsjmnW1mxDk3KPu6BKfNaRt+M2IofHgCyDf9gQxNvNGaXvGuDEFsgGMlgMULz8eGXG+AcK5DDe1NMfrf5GM6PHW0DQJMs97NSyfcwM9i2a/1PQdgMQ+O/uMQ7Q+q89SuJid5pj3mdyAPFabPT7aEstGaW4rjeLc8AnVnEKn58Uqc4Fhnh2JwpkGscdgzgWu+Pr5daaCUcR45gAHT1pbfhZpiOEp2UzA8wX77TffWXszfyAomJdrrgfJnRg93G1vHu7CAkyzZERbeg5WpulXrjfsht1sKR4hRuYU=
-  on:
-    tags: true
+  # test pypi
+  - provider: pypi
+    server: https://testpypi.python.org/pypi
+    user: gdyuldin
+    password:
+      secure: "EhjyFBvlANx9Qe2cfu+BhoeA+DtVQhry+7VUkh0AUNOtLD2lXYOeKWWveaSQIeWibHEyCIyRiHVVf0eyxZ7VZFToScHFrGy1ck3k4uo5ZWeyg61dBkpBjb8xb3VFUbjzUmAc8z7RgoAPm2wyuo75/k03ty0lm+wDTZTc91e8ldC5VAsVkeVKA/8iSIr67YASJVm1pL+e5lWLvdgKO6rk5ATAjrzXUgrcG6s4HuukZ9qveVLvs1N1PQs44edWXu7tjKw/9/9iPM+4pyyQuE+z5aRai0CH0EDnH9BKEx7UyglAjIs3nUa4OvGDOWk/4QmUfZDTR0SiJi6SX1+t3dh/5LRLov9LEPDqLkuTm6OdzZcPvXXMwuJMmrHcXgwSGEp5VQvI8XcfVD3h5ljKZRmakRZcNQ1/EbHZVjgEvFB9kZRv4Xf3bCvQJXD4skKAkHsYDDbPS0b9L53jqUx9f/W9O8Gw1kix/PLBZpkeXw+u03zbiqwhPJY0nkO/LWgLEUtKG67zWH1KK6M2bWhq7z0NFMWHaE58WhFlCwmTJA8KUKB+RiHG3a6UoqjJvzkd4f8AkCC19q0u/nByCnRsoxhmPpUhJAv9Whn3rfvUb/tT7F/Uqu30lS5LU5XbJhiyB//vCGuDV5M8GIgLOnVxBIQVSFIX/e9yipCoIB6gnFUUTtc="
+    on:
+      branch: master
+      tags: false
+
+  # production pypi
+  - provider: pypi
+    user: gdyuldin
+    password:
+      secure: "EhjyFBvlANx9Qe2cfu+BhoeA+DtVQhry+7VUkh0AUNOtLD2lXYOeKWWveaSQIeWibHEyCIyRiHVVf0eyxZ7VZFToScHFrGy1ck3k4uo5ZWeyg61dBkpBjb8xb3VFUbjzUmAc8z7RgoAPm2wyuo75/k03ty0lm+wDTZTc91e8ldC5VAsVkeVKA/8iSIr67YASJVm1pL+e5lWLvdgKO6rk5ATAjrzXUgrcG6s4HuukZ9qveVLvs1N1PQs44edWXu7tjKw/9/9iPM+4pyyQuE+z5aRai0CH0EDnH9BKEx7UyglAjIs3nUa4OvGDOWk/4QmUfZDTR0SiJi6SX1+t3dh/5LRLov9LEPDqLkuTm6OdzZcPvXXMwuJMmrHcXgwSGEp5VQvI8XcfVD3h5ljKZRmakRZcNQ1/EbHZVjgEvFB9kZRv4Xf3bCvQJXD4skKAkHsYDDbPS0b9L53jqUx9f/W9O8Gw1kix/PLBZpkeXw+u03zbiqwhPJY0nkO/LWgLEUtKG67zWH1KK6M2bWhq7z0NFMWHaE58WhFlCwmTJA8KUKB+RiHG3a6UoqjJvzkd4f8AkCC19q0u/nByCnRsoxhmPpUhJAv9Whn3rfvUb/tT7F/Uqu30lS5LU5XbJhiyB//vCGuDV5M8GIgLOnVxBIQVSFIX/e9yipCoIB6gnFUUTtc="
+    on:
+      tags: true
+

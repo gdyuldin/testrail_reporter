@@ -3,11 +3,15 @@
 from setuptools import setup, find_packages
 
 
+with open('README.rst') as f:
+    long_description = f.read()
+
 setup(
-    use_scm_version={'write_to': 'testrail_reporter/_version.py'},
-    name='testrail_reporter',
-    # version='0.0.3',
+    name='xunit2testrail',
+    version='0.5.3',
     description='Report test results from xUnit xml file to TestRail',
+    long_description=long_description,
+    license='MIT',
     author='Georgy Dyuldin',
     author_email='gdyuldin@mirantis.com',
     packages=find_packages(),
@@ -21,7 +25,6 @@ setup(
         'Jinja2',
         'six'
     ],
-    setup_requires=['setuptools_scm'],
     tests_require=[
         'pytest-mock',
         'pytest-capturelog',
