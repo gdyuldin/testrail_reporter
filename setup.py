@@ -8,7 +8,7 @@ with open('README.rst') as f:
 
 setup(
     name='xunit2testrail',
-    version='0.6.0',
+    version='0.6.1',
     description='Report test results from xUnit xml file to TestRail',
     long_description=long_description,
     license='MIT',
