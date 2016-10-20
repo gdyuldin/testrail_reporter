@@ -1,10 +1,10 @@
 import pytest
 
-from testrail_reporter.testrail.client import Case
-from testrail_reporter.utils import find_id
-from testrail_reporter.utils import find_uuid
-from testrail_reporter.utils import CaseMapper
-from testrail_reporter.utils import truncate_head
+from xunit2testrail.testrail.client import Case
+from xunit2testrail.utils import find_id
+from xunit2testrail.utils import find_uuid
+from xunit2testrail.utils import CaseMapper
+from xunit2testrail.utils import truncate_head
 
 xfail = pytest.mark.xfail
 
@@ -66,7 +66,7 @@ def test_extract_case_uuid(case_name, expected_id):
 ))  # yapf: disable
 def test_match_templates(x_tpl, tr_tpl, mapper, map_len, xcase_data,
                          tcase_data):
-    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+    from xunit2testrail.vendor.xunitparser import TestCase as XunitCase
     xunit_case = XunitCase(**xcase_data)
     case = Case(**tcase_data)
 
@@ -94,7 +94,7 @@ def test_match_templates(x_tpl, tr_tpl, mapper, map_len, xcase_data,
       '{id}', 1), ))
 def test_match_case(mapper, methodname, match_value, x_name_template,
                     map_len):
-    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+    from xunit2testrail.vendor.xunitparser import TestCase as XunitCase
     xunit_case = XunitCase(classname='a.b.C', methodname=methodname)
     case = Case(custom_report_label=match_value)
     mapper.xunit_name_template = x_name_template
@@ -103,7 +103,7 @@ def test_match_case(mapper, methodname, match_value, x_name_template,
 
 
 def test_empty_xunit_id(mapper, caplog):
-    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+    from xunit2testrail.vendor.xunitparser import TestCase as XunitCase
     xunit_case = XunitCase(classname='a.b.C', methodname='test_e[1]')
     mapper.xunit_name_template = '{id}'
     case = Case(custom_report_label=None)
@@ -147,7 +147,7 @@ def check_mapping(result, expected_dict):
     )),
 ))  # yapf: disable
 def test_map_cases(mapper, xunit_names, testrail_names, expected):
-    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+    from xunit2testrail.vendor.xunitparser import TestCase as XunitCase
     xunit_cases = [XunitCase(classname='a.b.C',
                              methodname=x) for x in xunit_names]
     testrail_cases = [Case(custom_report_label=x,
@@ -174,7 +174,7 @@ def test_map_cases(mapper, xunit_names, testrail_names, expected):
 ))  # yapf: disable
 def test_error_map_logging(mapper, xunit_names, testrail_names, log_strings,
                            caplog):
-    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+    from xunit2testrail.vendor.xunitparser import TestCase as XunitCase
     xunit_cases = [XunitCase(classname='a.b.C',
                              methodname=x) for x in xunit_names]
     testrail_cases = [Case(custom_report_label=x,
@@ -187,7 +187,7 @@ def test_error_map_logging(mapper, xunit_names, testrail_names, log_strings,
 
 
 def test_no_testrail_case_logging(mapper, caplog):
-    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+    from xunit2testrail.vendor.xunitparser import TestCase as XunitCase
     xunit_case = XunitCase(classname='a.b.C', methodname='d[(12345)]')
     testrail_case = Case(custom_report_label='123456')
     mapper.map([xunit_case], [testrail_case])

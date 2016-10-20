@@ -4,17 +4,17 @@ import json
 import re
 from functools import partial
 
-from testrail_reporter.testrail.client import Case
-from testrail_reporter.testrail.client import Client
-from testrail_reporter.testrail.client import Config
-from testrail_reporter.testrail.client import Milestone
-from testrail_reporter.testrail.client import Plan
-from testrail_reporter.testrail.client import Project
-from testrail_reporter.testrail.client import Result
-from testrail_reporter.testrail.client import Run
-from testrail_reporter.testrail.client import Test as TrTest
-from testrail_reporter.testrail.client import Suite
-from testrail_reporter.testrail.exceptions import NotFound
+from xunit2testrail.testrail.client import Case
+from xunit2testrail.testrail.client import Client
+from xunit2testrail.testrail.client import Config
+from xunit2testrail.testrail.client import Milestone
+from xunit2testrail.testrail.client import Plan
+from xunit2testrail.testrail.client import Project
+from xunit2testrail.testrail.client import Result
+from xunit2testrail.testrail.client import Run
+from xunit2testrail.testrail.client import Test as TrTest
+from xunit2testrail.testrail.client import Suite
+from xunit2testrail.testrail.exceptions import NotFound
 
 
 def _testrail_callback(data_kind):
@@ -45,7 +45,6 @@ def _testrail_callback(data_kind):
 
     def callback(request, uri, headers, _data):
         _id = uri.split('get_{}/'.format(data_kind))[-1]
-        print uri, _id
         if _id.isdigit():
             data = _data[int(_id)]
         else:

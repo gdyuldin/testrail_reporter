@@ -39,7 +39,7 @@ class Reporter(object):
         self.test_results_link = test_results_link
         self.case_mapper = case_mapper
         self.paste_url = paste_url
-        self.env = Environment(loader=PackageLoader('testrail_reporter'))
+        self.env = Environment(loader=PackageLoader('xunit2testrail'))
 
         super(Reporter, self).__init__(*args, **kwargs)
 

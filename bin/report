@@ -7,8 +7,8 @@ import sys
 import traceback
 import warnings
 
-from testrail_reporter import CaseMapper
-from testrail_reporter import Reporter
+from xunit2testrail import CaseMapper
+from xunit2testrail import Reporter
 
 
 warnings.simplefilter('always', DeprecationWarning)

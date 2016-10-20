@@ -8,9 +8,9 @@ import pytest
 import six
 from six.moves import StringIO
 
-from testrail_reporter import Reporter
-from testrail_reporter.testrail.client import Case
-from testrail_reporter.testrail.client import Plan
+from xunit2testrail import Reporter
+from xunit2testrail.testrail.client import Case
+from xunit2testrail.testrail.client import Plan
 
 if six.PY2:
     import mock
@@ -21,7 +21,7 @@ else:
 @pytest.fixture
 def testrail_client(mocker):
     fake_statuses = mock.PropertyMock(return_value={1: 'passed', 2: 'skipped'})
-    mocker.patch('testrail_reporter.reporter.TrClient.statuses',
+    mocker.patch('xunit2testrail.reporter.TrClient.statuses',
                  new_callable=fake_statuses)
     return
 
@@ -45,7 +45,7 @@ def reporter(testrail_client):
 
 @pytest.fixture
 def xunit_case():
-    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+    from xunit2testrail.vendor.xunitparser import TestCase as XunitCase
     xunit_case = XunitCase(classname='a.TestClass', methodname='test_method')
     xunit_case.result = 'success'
     xunit_case.time = datetime.timedelta(seconds=1)
@@ -101,7 +101,7 @@ def test_print_run_url(reporter, mocker):
       'http://t_job/testReport/(root)/TClass/test_method_AS_b_/'), ))
 def test_get_jenkins_report_url(reporter, classname, methodname, expected_url):
 
-    from testrail_reporter.vendor.xunitparser import TestCase as XunitCase
+    from xunit2testrail.vendor.xunitparser import TestCase as XunitCase
     xunit_case = XunitCase(classname=classname, methodname=methodname)
     reporter.test_results_link = 'http://t_job/'
     assert expected_url == reporter.get_jenkins_report_url(xunit_case)
