@@ -1,8 +1,16 @@
 Changelog
 =========
 
-0.6.0 (2016-10-19)
-------------------
+v0.6.1 (2016-10-20)
+-------------------
+
+Fix
+~~~
+
+- Change package name in MANIFEST.in. [Georgy Dyuldin]
+
+v0.6.0 (2016-10-20)
+-------------------
 
 New
 ~~~
@@ -11,6 +19,8 @@ New
 
 Other
 ~~~~~
+
+- Rename package to xunit2testrail. [Georgy Dyuldin]
 
 - Update CHANGELOG.rst. [Georgy Dyuldin]
 
