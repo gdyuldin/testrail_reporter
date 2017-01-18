@@ -129,6 +129,7 @@ class TestSuite(unittest.TestSuite):
         self.properties = {}
         self.stdout = None
         self.stderr = None
+        self._cleanup = False
 
 
 class Parser(object):

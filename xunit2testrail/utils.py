@@ -66,8 +66,7 @@ class CaseMapper(object):
         split_expr = re.compile(r'[{}]'.format(split_symbols))
         match_cases = []
         for case in cases:
-            testrail_id = self.testrail_name_template.decode(
-                'utf-8').format(**case.data).encode('utf-8')
+            testrail_id = self.testrail_name_template.format(**case.data)
             groups = [x for x in split_expr.split(testrail_id) if x]
             groups.reverse()
             for group in groups:

@@ -16,7 +16,11 @@ setup(
     author_email='gdyuldin@mirantis.com',
     packages=find_packages(),
     package_data={'': ['templates/*']},
-    scripts=['bin/report'],
+    entry_points={
+              'console_scripts': [
+                  'report = xunit2testrail.cmd:main'
+              ]
+          },
     url="https://github.com/gdyuldin/testrail_reporter",
     install_requires=[
         'setuptools>=17.1',
@@ -28,6 +32,6 @@ setup(
     tests_require=[
         'pytest-mock',
         'pytest-capturelog',
-        'httpretty',
+        'requests-mock',
     ],
 )

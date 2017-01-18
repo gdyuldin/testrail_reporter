@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
-import json
 import re
 
-import httpretty
 import pytest
 import six
 from six.moves import StringIO
@@ -21,25 +19,28 @@ else:
 @pytest.fixture
 def testrail_client(mocker):
     fake_statuses = mock.PropertyMock(return_value={1: 'passed', 2: 'skipped'})
-    mocker.patch('xunit2testrail.reporter.TrClient.statuses',
-                 new_callable=fake_statuses)
+    mocker.patch(
+        'xunit2testrail.reporter.TrClient.statuses',
+        new_callable=fake_statuses)
     return
 
 
 @pytest.fixture
 def reporter(testrail_client):
-    reporter = Reporter(xunit_report='tests/xunit_files/report.xml',
-                        env_description='vlan_ceph',
-                        test_results_link="http://test_job/",
-                        case_mapper=None,
-                        paste_url='http://example.com/')
-    reporter.config_testrail(base_url="https://testrail",
-                             username="user",
-                             password="password",
-                             milestone="0.1",
-                             project="Test Project",
-                             tests_suite="Test Suite",
-                             plan_name="Plan name")
+    reporter = Reporter(
+        xunit_report='tests/xunit_files/report.xml',
+        env_description='vlan_ceph',
+        test_results_link="http://test_job/",
+        case_mapper=None,
+        paste_url='http://example.com/')
+    reporter.config_testrail(
+        base_url="https://testrail",
+        username="user",
+        password="password",
+        milestone="0.1",
+        project="Test Project",
+        tests_suite="Test Suite",
+        plan_name="Plan name")
     return reporter
 
 
@@ -60,16 +61,14 @@ def xunit_case_skipped(xunit_case):
 
 @pytest.fixture
 def paste_api(api_mock):
-    paste_url = re.escape(
-        'http://example.com/json/?method=pastes.newPaste')
-    httpretty.register_uri(httpretty.POST,
-                           re.compile(paste_url),
-                           body='{"data":"123"}',
-                           match_querystring=True)
+    paste_url = re.escape('http://example.com/json/?method=pastes.newPaste')
+    api_mock.register_uri(
+        'POST', re.compile(paste_url), json={"data": "123"}, complete_qs=True)
 
 
 def test_parse_report(reporter):
     suite, result = reporter.get_xunit_test_suite()
+    assert all(suite)
     assert len(list(suite)) == 65
     assert len(result.skipped) == 25
     assert len(result.failures) == 13
@@ -79,26 +78,24 @@ def test_print_run_url(reporter, mocker):
     stdout = mocker.patch('sys.stdout', new=StringIO())
     run = mock.Mock(url='http://report_url/')
     mocker.patch.object(reporter, 'find_testrail_cases', return_value=[Case()])
-    mocker.patch.object(reporter,
-                        'get_or_create_plan',
-                        return_value=Plan('test_plan'))
+    mocker.patch.object(
+        reporter, 'get_or_create_plan', return_value=Plan('test_plan'))
     mocker.patch.object(reporter, 'create_test_run', return_value=run)
     reporter.execute()
     assert stdout.getvalue() == ('[TestRun URL] http://report_url/\n')
 
 
-@pytest.mark.parametrize(
-    'classname, methodname, expected_url',
-    (('a.b.c.TClass', 'test_method[2](1)',
-      'http://t_job/testReport/a.b.c/TClass/test_method_2__1_/'),
-     ('a.b.c.TClass', 'test_method[id-1]',
-      'http://t_job/testReport/a.b.c/TClass/test_method_id_1_/'),
-     ('a.b.c.TClass', 'test_method[a,b]',
-      'http://t_job/testReport/a.b.c/TClass/test_method_a_b_/'),
-     ('TClass', 'test_method[a,b]',
-      'http://t_job/testReport/(root)/TClass/test_method_a_b_/'),
-     ('TClass', 'test_method[AS,b]',
-      'http://t_job/testReport/(root)/TClass/test_method_AS_b_/'), ))
+@pytest.mark.parametrize('classname, methodname, expected_url', (
+    ('a.b.c.TClass', 'test_method[2](1)',
+     'http://t_job/testReport/a.b.c/TClass/test_method_2__1_/'),
+    ('a.b.c.TClass', 'test_method[id-1]',
+     'http://t_job/testReport/a.b.c/TClass/test_method_id_1_/'),
+    ('a.b.c.TClass', 'test_method[a,b]',
+     'http://t_job/testReport/a.b.c/TClass/test_method_a_b_/'),
+    ('TClass', 'test_method[a,b]',
+     'http://t_job/testReport/(root)/TClass/test_method_a_b_/'),
+    ('TClass', 'test_method[AS,b]',
+     'http://t_job/testReport/(root)/TClass/test_method_AS_b_/'), ))
 def test_get_jenkins_report_url(reporter, classname, methodname, expected_url):
 
     from xunit2testrail.vendor.xunitparser import TestCase as XunitCase
@@ -141,15 +138,17 @@ def test_paste_result_link(reporter, xunit_case, paste_api):
     assert link == "http://example.com/show/123/"
 
 
-@pytest.mark.parametrize('prop, value', (('trace', "i'm trace"),
-                                         ('stdout', "i'm stdout"),
-                                         ('stderr', "i'm stderr"), ))
-def test_paste_store_data(reporter, xunit_case, paste_api, prop, value):
+@pytest.mark.parametrize('prop, value', (
+    ('trace', "i'm trace"),
+    ('stdout', "i'm stdout"),
+    ('stderr', "i'm stderr"), ))
+def test_paste_store_data(api_mock, reporter, xunit_case, paste_api, prop,
+                          value):
     absent_props = ['trace', 'stdout', 'stderr']
     absent_props.remove(prop)
     setattr(xunit_case, prop, value)
     reporter.save_to_paste(xunit_case)
-    payload = json.loads(httpretty.last_request().body)
+    payload = api_mock.request_history[-1].json()
     assert value in payload['code']
     for absent_prop in absent_props:
         assert absent_prop not in payload['code']

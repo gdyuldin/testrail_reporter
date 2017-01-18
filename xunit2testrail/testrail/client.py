@@ -18,8 +18,9 @@ class ItemSet(list):
         return super(ItemSet, self).__init__(*args, **kwargs)
 
     def find_all(self, **kwargs):
-        filtered = ItemSet(x for x in self if
-                           all(getattr(x, k) == v for k, v in kwargs.items()))
+        filtered = ItemSet(
+            x for x in self
+            if all(getattr(x, k) == v for k, v in kwargs.items()))
         filtered._item_class = self._item_class
         return filtered
 
@@ -33,8 +34,8 @@ class ItemSet(list):
 
 class Collection(object):
 
-    list_url = 'get_{name}s'
-    add_url = 'add_{name}'
+    _list_url = 'get_{name}s'
+    _add_url = 'add_{name}'
 
     def __init__(self, item_class=None, parent_id=None, **kwargs):
         self._item_class = item_class
@@ -64,13 +65,13 @@ class Collection(object):
 
     def _list(self, name, params=None):
         params = params or {}
-        url = self.list_url.format(name=name)
+        url = self._list_url.format(name=name)
         if self.parent_id is not None:
             url += '/{}'.format(self.parent_id)
         return self._handler('GET', url, params=params)
 
     def _add(self, name, data, **kwargs):
-        url = self.add_url.format(name=name)
+        url = self._add_url.format(name=name)
         if self.parent_id is not None:
             url += '/{}'.format(self.parent_id)
         return self._handler('POST', url, json=data, **kwargs)
@@ -91,10 +92,10 @@ class Collection(object):
 
 
 class Item(object):
-    get_url = 'get_{name}/{id}'
-    update_url = 'update_{name}/{id}'
+    _get_url = 'get_{name}/{id}'
+    _update_url = 'update_{name}/{id}'
     _handler = None
-    repr_field = 'name'
+    _repr_field = 'name'
 
     def __init__(self, id=None, **kwargs):
         self.id = id
@@ -117,7 +118,7 @@ class Item(object):
             self.__dict__[name] = value
 
     def __repr__(self):
-        name = getattr(self, self.repr_field, '')
+        name = getattr(self, self._repr_field, '')
         name = repr(name)
         return '<{c.__name__}({s.id}) {name} at 0x{id:x}>'.format(
             s=self, c=self.__class__, id=id(self), name=name)
@@ -125,14 +126,14 @@ class Item(object):
     @classmethod
     def get(cls, id):
         name = cls._api_name()
-        url = cls.get_url.format(name=name, id=id)
+        url = cls._get_url.format(name=name, id=id)
         result = cls._handler('GET', url)
         if 'error' in result:
             raise Exception(result)
         return cls(**result)
 
     def update(self):
-        url = self.update_url.format(name=self._api_name(), id=self.id)
+        url = self._update_url.format(name=self._api_name(), id=self.id)
         self._handler('POST', url, json=self.data)
 
     @property
@@ -165,14 +166,15 @@ class Project(Item):
 class Suite(Item):
     @property
     def cases(self):
-        return CaseCollection(Case, list_url='get_cases/{}&suite_id={}'.format(
-            self.project_id, self.id))
+        return CaseCollection(
+            Case,
+            _list_url='get_cases/{}&suite_id={}'.format(self.project_id,
+                                                        self.id))
 
 
 class CaseCollection(Collection):
-
     def _add(self, name, data, **kwargs):
-        url = self.add_url.format(name=name)
+        url = self._add_url.format(name=name)
         section_id = data.pop('section_id')
         data.pop('result', None)
         url = '{}/{}'.format(url, section_id)
@@ -180,7 +182,7 @@ class CaseCollection(Collection):
 
 
 class Case(Item):
-    repr_field = 'title'
+    _repr_field = 'title'
 
     def __init__(self, *args, **kwargs):
         super(Case, self).__init__(*args, **kwargs)
@@ -191,21 +193,29 @@ class Case(Item):
 
 
 class Plan(Item):
-    def __init__(self, name, description=None, milestone_id=None,
-                 entries=None, id=None, **kwargs):
-        add_kwargs = locals()
-        add_kwargs.pop('self')
-        add_kwargs.pop('kwargs')
-        add_kwargs.pop('id')
-        add_kwargs['entries'] = entries or []
-
+    def __init__(self,
+                 name,
+                 description=None,
+                 milestone_id=None,
+                 entries=None,
+                 id=None,
+                 **kwargs):
+        add_kwargs = {
+            'name': name,
+            'description': description,
+            'milestone_id': milestone_id,
+            'entries': entries or [],
+        }
         kwargs.update(add_kwargs)
         return super(self.__class__, self).__init__(id, **kwargs)
 
     def add_run(self, run):
         url = 'add_plan_entry/{}'.format(self.id)
-        run_data = {k: v for k, v in run.data.items()
-                    if k in ('case_ids', 'config_ids', 'name', 'description')}
+        run_data = {
+            k: v
+            for k, v in run.data.items()
+            if k in ('case_ids', 'config_ids', 'name', 'description')
+        }
         request = {
             "suite_id": run.suite_id,
             "name": run.name,
@@ -222,9 +232,17 @@ class Plan(Item):
 
 
 class Run(Item):
-    def __init__(self, suite_id, milestone_id, config_ids=(), name="",
-                 description="", include_all=False, case_ids=(),
-                 assignedto_id=None, id=None, **kwargs):
+    def __init__(self,
+                 suite_id,
+                 milestone_id,
+                 config_ids=(),
+                 name="",
+                 description="",
+                 include_all=False,
+                 case_ids=(),
+                 assignedto_id=None,
+                 id=None,
+                 **kwargs):
         add_kwargs = locals()
         add_kwargs.pop('self')
         add_kwargs.pop('kwargs')
@@ -239,8 +257,7 @@ class Run(Item):
 
     @property
     def results(self):
-        return ResultCollection(Result, parent_id=self.id,
-            list_url='get_results_for_run')
+        return ResultCollection(Result, parent_id=self.id)
 
     def add_results_for_cases(self, cases):
         return self.results.add_for_cases(self.id, cases)
@@ -251,6 +268,9 @@ class Test(Item):
 
 
 class ResultCollection(Collection):
+
+    _list_url = 'get_results_for_run'
+
     def add_for_cases(self, run_id, cases):
         if len(cases) == 0:
             logger.warning('No cases with result for run {}'.format(run_id))
@@ -271,12 +291,23 @@ class ResultCollection(Collection):
 
 
 class Result(Item):
-    def __init__(self, status_id, comment=None, version=None, elapsed=None,
-                 defects=None, assignedto_id=None, id=None, **kwargs):
-        add_kwargs = locals()
-        add_kwargs.pop('self')
-        add_kwargs.pop('kwargs')
-        add_kwargs.pop('id')
+    def __init__(self,
+                 status_id,
+                 comment=None,
+                 version=None,
+                 elapsed=None,
+                 defects=None,
+                 assignedto_id=None,
+                 id=None,
+                 **kwargs):
+        add_kwargs = {
+            'status_id': status_id,
+            'comment': comment,
+            'version': version,
+            'elapsed': elapsed,
+            'defects': defects,
+            'assignedto_id': assignedto_id,
+        }
 
         kwargs.update(add_kwargs)
         return super(self.__class__, self).__init__(id, **kwargs)
@@ -291,27 +322,25 @@ class Config(Item):
 
 
 class Client(object):
-
     def __init__(self, base_url, username, password):
         self.username = username
         self.password = password
-        self._base_url = base_url
+        self.base_url = base_url.rstrip('/') + '/index.php?/api/v2/'
 
         Item._handler = self._query
 
-    @property
-    def base_url(self):
-        url = self._base_url.rstrip('/')
-        return '{}/index.php?/api/v2/'.format(url)
-
     def _query(self, method, url, **kwargs):
         url = self.base_url + url
-        kwargs['auth'] = (self.username, self.password)
-        kwargs['headers'] = {'Content-type': 'application/json'}
+        headers = {'Content-type': 'application/json'}
         logger.debug('Make {} request to {}'.format(method, url))
         for _ in range(5):
             response = requests.request(
-                method, url, allow_redirects=False, **kwargs)
+                method,
+                url,
+                allow_redirects=False,
+                auth=(self.username, self.password),
+                headers=headers,
+                **kwargs)
             # To many requests
             if response.status_code == 429:
                 time.sleep(60)
@@ -320,11 +349,10 @@ class Client(object):
                 break
         # Redirect or error
         if response.status_code >= 300:
-            raise Exception(
-                "Wrong response:\n"
-                "status_code: {0.status_code}\n"
-                "headers: {0.headers}\n"
-                "content: '{0.content}'".format(response))
+            raise Exception("Wrong response:\n"
+                            "status_code: {0.status_code}\n"
+                            "headers: {0.headers}\n"
+                            "content: '{0.content}'".format(response))
         result = response.json()
         if 'error' in result:
             logger.warning(result)

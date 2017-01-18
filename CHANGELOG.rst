@@ -1,6 +1,14 @@
 Changelog
 =========
 
+%%version%% (unreleased)
+------------------------
+
+New
+~~~
+
+- Add python3 support. [Georgy Dyuldin]
+
 v0.6.1 (2016-10-20)
 -------------------
 

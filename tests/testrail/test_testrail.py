@@ -1,5 +1,4 @@
 import pytest
-import httpretty
 import json
 import re
 from functools import partial
@@ -22,19 +21,25 @@ def _testrail_callback(data_kind):
     project_response = {1: {'id': 1}}
     suite_response = {2: {'id': 2, 'project_id': 1}}
     case_response = {
-        3: {'id': 3,
+        3: {
+            'id': 3,
             'suite_id': 2,
-            'title': 'case title'},
-        31: {'id': 31,
-             'suite_id': 2,
-             'title': 'case title31'},
+            'title': 'case title'
+        },
+        31: {
+            'id': 31,
+            'suite_id': 2,
+            'title': 'case title31'
+        },
     }
     run_response = {
-        4: {'id': 4,
+        4: {
+            'id': 4,
             'project_id': 1,
             'suite_id': 2,
             'milestone_id': 8,
-            'config_id': 9}
+            'config_id': 9
+        }
     }
     result_response = {5: {'id': 5, 'status_id': 6}}
     status_response = {6: {'id': 6, 'name': 'passed'}}
@@ -43,13 +48,14 @@ def _testrail_callback(data_kind):
     config_response = {9: {'id': 9, 'project_id': 1}}
     test_response = {10: {'id': 10, 'run_id': 4}}
 
-    def callback(request, uri, headers, _data):
-        _id = uri.split('get_{}/'.format(data_kind))[-1]
+    def callback(request, context, _data):
+        context.status_code = 200
+        _id = request.query.split('get_{}/'.format(data_kind))[-1]
         if _id.isdigit():
             data = _data[int(_id)]
         else:
-            data = _data.values()
-        return (200, headers, json.dumps(data))
+            data = list(_data.values())
+        return json.dumps(data)
 
     data = locals().get(data_kind + '_response')
 
@@ -58,52 +64,61 @@ def _testrail_callback(data_kind):
 
 @pytest.fixture
 def client(api_mock):
-    client = Client(base_url='http://testrail/',
-                    username='user',
-                    password='password')
+    client = Client(
+        base_url='http://testrail/', username='user', password='password')
 
     base = re.escape(client.base_url)
 
-    httpretty.register_uri(httpretty.GET,
-                           re.compile(base + r'get_project(s|/).*'),
-                           body=_testrail_callback('project'),
-                           match_querystring=True)
-    httpretty.register_uri(httpretty.GET,
-                           re.compile(base + r'get_suite(s|/).*'),
-                           body=_testrail_callback('suite'),
-                           match_querystring=True)
-    httpretty.register_uri(httpretty.GET,
-                           re.compile(base + r'get_case(s|/).*'),
-                           body=_testrail_callback('case'),
-                           match_querystring=True)
-    httpretty.register_uri(httpretty.GET,
-                           re.compile(base + r'get_plan(s|/).*'),
-                           body=_testrail_callback('plan'),
-                           match_querystring=True)
-    httpretty.register_uri(httpretty.GET,
-                           re.compile(base + r'get_run(s|/).*'),
-                           body=_testrail_callback('run'),
-                           match_querystring=True)
-    httpretty.register_uri(httpretty.GET,
-                           re.compile(base + r'get_result(s|/).*'),
-                           body=_testrail_callback('result'),
-                           match_querystring=True)
-    httpretty.register_uri(httpretty.GET,
-                           re.compile(base + r'get_status(es|/).*'),
-                           body=_testrail_callback('status'),
-                           match_querystring=True)
-    httpretty.register_uri(httpretty.GET,
-                           re.compile(base + r'get_milestone(s|/).*'),
-                           body=_testrail_callback('milestone'),
-                           match_querystring=True)
-    httpretty.register_uri(httpretty.GET,
-                           re.compile(base + r'get_config(s|/).*'),
-                           body=_testrail_callback('config'),
-                           match_querystring=True)
-    httpretty.register_uri(httpretty.GET,
-                           re.compile(base + r'get_test(s|/).*'),
-                           body=_testrail_callback('test'),
-                           match_querystring=True)
+    api_mock.register_uri(
+        'GET',
+        re.compile(base + r'get_project(s|/).*'),
+        text=_testrail_callback('project'),
+        complete_qs=True)
+    api_mock.register_uri(
+        'GET',
+        re.compile(base + r'get_suite(s|/).*'),
+        text=_testrail_callback('suite'),
+        complete_qs=True)
+    api_mock.register_uri(
+        'GET',
+        re.compile(base + r'get_case(s|/).*'),
+        text=_testrail_callback('case'),
+        complete_qs=True)
+    api_mock.register_uri(
+        'GET',
+        re.compile(base + r'get_plan(s|/).*'),
+        text=_testrail_callback('plan'),
+        complete_qs=True)
+    api_mock.register_uri(
+        'GET',
+        re.compile(base + r'get_run(s|/).*'),
+        text=_testrail_callback('run'),
+        complete_qs=True)
+    api_mock.register_uri(
+        'GET',
+        re.compile(base + r'get_result(s|/).*'),
+        text=_testrail_callback('result'),
+        complete_qs=True)
+    api_mock.register_uri(
+        'GET',
+        re.compile(base + r'get_status(es|/).*'),
+        text=_testrail_callback('status'),
+        complete_qs=True)
+    api_mock.register_uri(
+        'GET',
+        re.compile(base + r'get_milestone(s|/).*'),
+        text=_testrail_callback('milestone'),
+        complete_qs=True)
+    api_mock.register_uri(
+        'GET',
+        re.compile(base + r'get_config(s|/).*'),
+        text=_testrail_callback('config'),
+        complete_qs=True)
+    api_mock.register_uri(
+        'GET',
+        re.compile(base + r'get_test(s|/).*'),
+        text=_testrail_callback('test'),
+        complete_qs=True)
     return client
 
 
@@ -278,15 +293,16 @@ def test_unsuccess_find(suite):
         suite.cases.find(title='case title1')
 
 
-def test_add_plan(client, project):
+def test_add_plan(api_mock, client, project):
     base = re.escape(client.base_url)
 
-    httpretty.register_uri(httpretty.POST,
-                           re.compile(base + r'add_plan/.*'),
-                           body=json.dumps({'id': 8,
-                                            'project_id': 1,
-                                            'name': 'old_test_plan'}),
-                           match_querystring=True)
+    api_mock.register_uri(
+        'POST',
+        re.compile(base + r'add_plan/.*'),
+        json={'id': 8,
+              'project_id': 1,
+              'name': 'old_test_plan'},
+        complete_qs=True)
     new_plan = project.plans.add(name='test_plan', milestone_id=7)
     expected = {
         "milestone_id": 7,
@@ -294,19 +310,22 @@ def test_add_plan(client, project):
         "description": None,
         "name": "test_plan"
     }
-    result = json.loads(httpretty.last_request().body)
+    result = api_mock.request_history[-1].json()
     assert expected == result
     assert type(new_plan) is Plan
     assert new_plan.id == 8
 
 
-def test_add_run_to_plan(client, plan):
+def test_add_run_to_plan(api_mock, client, plan):
     base = re.escape(client.base_url)
 
-    httpretty.register_uri(httpretty.POST,
-                           re.compile(base + r'add_plan_entry/.*'),
-                           body=json.dumps({'runs': [{'id': 8}]}),
-                           match_querystring=True)
+    api_mock.register_uri(
+        'POST',
+        re.compile(base + r'add_plan_entry/.*'),
+        json={'runs': [{
+            'id': 8
+        }]},
+        complete_qs=True)
 
     run = Run(suite_id=14,
               milestone_id=15,
@@ -322,28 +341,27 @@ def test_add_run_to_plan(client, plan):
         "include_all": False,
         "case_ids": [1, 2],
         "config_ids": [16],
-        "runs": [
-            {
-                "name": "test_run",
-                "description": "test description",
-                "case_ids": [1, 2],
-                "config_ids": [16]
-            }
-        ]
+        "runs": [{
+            "name": "test_run",
+            "description": "test description",
+            "case_ids": [1, 2],
+            "config_ids": [16]
+        }]
     }
-    result = json.loads(httpretty.last_request().body)
+    result = api_mock.request_history[-1].json()
     assert expected == result
     assert run.id == 8
 
 
-def test_add_result(client, run):
+def test_add_result(api_mock, client, run):
     base = re.escape(client.base_url)
 
-    httpretty.register_uri(httpretty.POST,
-                           re.compile(base + r'add_result/.*'),
-                           body=json.dumps({'id': 5,
-                                            'status_id': 4}),
-                           match_querystring=True)
+    api_mock.register_uri(
+        'POST',
+        re.compile(base + r'add_result/.*'),
+        json={'id': 5,
+              'status_id': 4},
+        complete_qs=True)
     result = run.results.add(status_id=1, comment="test result comment")
     expected = {
         "assignedto_id": None,
@@ -353,21 +371,22 @@ def test_add_result(client, run):
         "status_id": 1,
         "version": None,
     }
-    request = json.loads(httpretty.last_request().body)
+    request = api_mock.request_history[-1].json()
     assert request == expected
     assert type(result) is Result
     assert result.id == 5
 
 
-def test_add_case(client, suite):
+def test_add_case(api_mock, client, suite):
     base = re.escape(client.base_url)
 
-    httpretty.register_uri(httpretty.POST,
-                           re.compile(base + r'add_case/157'),
-                           body=json.dumps({'id': 8,
-                                            'project_id': 1,
-                                            'title': 'case'}),
-                           match_querystring=True)
+    api_mock.register_uri(
+        'POST',
+        re.compile(base + r'add_case/157'),
+        json={'id': 8,
+              'project_id': 1,
+              'title': 'case'},
+        complete_qs=True)
     new_case = suite.cases.add(title='test_case',
                                milestone_id=7,
                                description='test_case_description',
@@ -377,67 +396,66 @@ def test_add_case(client, suite):
         "description": 'test_case_description',
         "title": "test_case"
     }
-    result = json.loads(httpretty.last_request().body)
+    result = api_mock.request_history[-1].json()
     assert expected == result
     assert type(new_case) is Case
     assert new_case.id == 8
 
 
-def test_add_results_for_cases(client, suite, run):
+def test_add_results_for_cases(api_mock, client, suite, run):
     base = re.escape(client.base_url)
 
-    httpretty.register_uri(httpretty.POST,
-                           re.compile(base + r'add_results_for_cases/.*'),
-                           body=json.dumps([{'id': 5,
-                                             'status_id': 4}]),
-                           match_querystring=True)
+    api_mock.register_uri(
+        'POST',
+        re.compile(base + r'add_results_for_cases/.*'),
+        json=[{
+            'id': 5,
+            'status_id': 4
+        }],
+        complete_qs=True)
     cases = suite.cases()
     for case in cases[:-1]:
         case.add_result(status_id=1, comment="test result comment")
     new_results = run.add_results_for_cases(cases)
     expected = {
-        "results": [
-            {
-                "case_id": 3,
-                "assignedto_id": None,
-                "comment": "test result comment",
-                "defects": None,
-                "elapsed": None,
-                "status_id": 1,
-                "version": None,
-            },
-        ]
+        "results": [{
+            "case_id": 3,
+            "assignedto_id": None,
+            "comment": "test result comment",
+            "defects": None,
+            "elapsed": None,
+            "status_id": 1,
+            "version": None,
+        }, ]
     }
-    result = json.loads(httpretty.last_request().body)
+    result = api_mock.request_history[-1].json()
     assert expected == result
     assert type(new_results) is list
     assert type(new_results[0]) is Result
     assert new_results[0].id == 5
 
 
-@pytest.mark.parametrize('statuses',
-                         ([200],
-                          [429, 200],
-                          [429, 429, 429, 429, 200],
-                          pytest.mark.xfail([429, 429, 429, 429, 429, 200]),
-                          pytest.mark.xfail([300]),
-                          pytest.mark.xfail([400]),
-                          pytest.mark.xfail([500]), ))
+@pytest.mark.parametrize('statuses', (
+    [200],
+    [429, 200],
+    [429, 429, 429, 429, 200],
+    pytest.mark.xfail([429, 429, 429, 429, 429, 200]),
+    pytest.mark.xfail([300]),
+    pytest.mark.xfail([400]),
+    pytest.mark.xfail([500]), ))
 def test_http_errors(api_mock, mocker, statuses):
-    client = Client(base_url='http://testrail/',
-                    username='user',
-                    password='password')
+    client = Client(
+        base_url='http://testrail/', username='user', password='password')
 
-    def request_callback(request, uri, headers):
+    def request_callback(request, context):
         status = statuses.pop(0)
-        return (status, headers, "[]")
+        context.status_code = status
+        return "[]"
 
     url = re.escape('http://testrail/index.php?/api/v2/get_projects')
 
-    httpretty.register_uri(httpretty.GET,
-                           re.compile(url),
-                           body=request_callback,
-                           match_querystring=True)
+    api_mock.register_uri(
+        'GET', re.compile(url), text=request_callback, complete_qs=True)
 
     mocker.patch('time.sleep')
     client.projects()

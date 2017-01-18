@@ -1,11 +1,8 @@
-import httpretty
+import requests_mock
 import pytest
 
 
 @pytest.yield_fixture
 def api_mock():
-    httpretty.enable()
-    httpretty.HTTPretty.allow_net_connect = False
-    yield
-    httpretty.disable()
-    httpretty.reset()
+    with requests_mock.Mocker() as m:
+        yield m

@@ -11,8 +11,8 @@ xfail = pytest.mark.xfail
 
 @pytest.fixture
 def mapper():
-    return CaseMapper(xunit_name_template='{id}',
-                      testrail_name_template='{custom_report_label}')
+    return CaseMapper(xunit_name_template=u'{id}',
+                      testrail_name_template=u'{custom_report_label}')
 
 
 @pytest.mark.parametrize(
@@ -79,7 +79,7 @@ def test_match_templates(x_tpl, tr_tpl, mapper, map_len, xcase_data,
 @pytest.mark.parametrize(
     'methodname, match_value, x_name_template, map_len',
     (('test_add', 'test_add', '{methodname}', 1),
-     ('test_a', u'test_b\u2019', '{methodname}', 0),
+     (u'test_a', u'test_b\u2019', u'{methodname}', 0),
      ('test_a', 'test_ab', '{methodname}', 0),
      ('test_ab', 'test_a', '{methodname}', 0),
      ('test_a[(12345)]', '12345', '{id}', 1),
