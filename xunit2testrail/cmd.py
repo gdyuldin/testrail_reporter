@@ -47,7 +47,7 @@ def parse_args(args):
     }
     defaults = {k: os.environ.get(k, v) for k, v in defaults.items()}
 
-    parser = argparse.ArgumentParser(description='Report to testrail')
+    parser = argparse.ArgumentParser(description='xUnit to testrail reporter')
     parser.add_argument(
         'xunit_report',
         type=filename,
@@ -141,7 +141,7 @@ def parse_args(args):
 
 def main(args=None):
 
-    args = args or sys.argv[:1]
+    args = args or sys.argv[1:]
 
     args = parse_args(args)
 

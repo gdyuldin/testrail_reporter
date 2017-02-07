@@ -9,6 +9,11 @@ New
 
 - Add python3 support. [Georgy Dyuldin]
 
+Other
+~~~~~
+
+- Fix command args parsing. [Georgy Dyuldin]
+
 v0.6.1 (2016-10-20)
 -------------------
 

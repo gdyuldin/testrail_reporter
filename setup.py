@@ -29,9 +29,9 @@ setup(
         'Jinja2',
         'six'
     ],
-    tests_require=[
+    extras_require={'test': [
         'pytest-mock',
         'pytest-capturelog',
         'requests-mock',
-    ],
+    ]},
 )
