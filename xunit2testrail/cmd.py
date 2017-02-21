@@ -128,7 +128,12 @@ def parse_args(args):
         type=str_cls,
         default=defaults['PASTE_BASE_URL'],
         help='paste service to send test case logs and trace')
-
+    parser.add_argument(
+        '--testrail-run-update',
+        dest='use_test_run_if_exists',
+        action='store_true',
+        default=False,
+        help='don\'t create new test run if such already exists')
     parser.add_argument(
         '--verbose',
         '-v',
@@ -178,7 +183,8 @@ def main(args=None):
         project=args.testrail_project,
         plan_name=args.testrail_plan_name,
         tests_suite=suite,
-        send_skipped=args.send_skipped)
+        send_skipped=args.send_skipped,
+        use_test_run_if_exists=args.use_test_run_if_exists)
     reporter.execute()
 
 

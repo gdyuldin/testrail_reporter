@@ -38,15 +38,32 @@ def _testrail_callback(data_kind):
             'project_id': 1,
             'suite_id': 2,
             'milestone_id': 8,
-            'config_id': 9
-        }
+            'config_ids': [9],
+            'plan_id': None,
+        },
+        13: {
+            'id': 13,
+            'project_id': 1,
+            'suite_id': 2,
+            'milestone_id': 8,
+            'config_ids': [9],
+            'plan_id': 8,
+            'name': 'some test run',
+            'description': None,
+            'assignedto_id': None,
+            'case_ids': []
+        },
     }
     result_response = {5: {'id': 5, 'status_id': 6}}
     status_response = {6: {'id': 6, 'name': 'passed'}}
-    plan_response = {7: {'id': 7, 'project_id': 1, 'name': 'old_test_plan'}}
+    plan_response = {7: {'id': 7, 'project_id': 1, 'name': 'old_test_plan'},
+                     8: {'id': 8, 'project_id': 1, 'name': 'new_test_plan',
+                         'entries': [{'runs': [{'id': 13,
+                                                'name': 'some test run'}],
+                                      'id': 12}]}}
     milestone_response = {8: {'id': 8, 'project_id': 1}}
     config_response = {9: {'id': 9, 'project_id': 1}}
-    test_response = {10: {'id': 10, 'run_id': 4}}
+    test_response = {10: {'id': 10, 'run_id': 4, 'case_id': 5}}
 
     def callback(request, context, _data):
         context.status_code = 200
@@ -227,6 +244,7 @@ def test_tr_tests(run):
     assert isinstance(tests, list)
     assert isinstance(tests[0], TrTest)
     assert tests[0].run_id == run.id
+    assert tests[0].case_id == 5
 
 
 def test_tr_test(run, test):
@@ -288,9 +306,28 @@ def test_find(suite):
     assert case.title == 'case title'
 
 
+def test_find_run_in_plan(project):
+    plan = project.plans.find(name='new_test_plan')
+    assert type(plan) is Plan
+    assert plan.name == 'new_test_plan'
+    assert plan.entries[0]['id'] == 12
+    included_run = plan.runs.find(name='some test run')
+    assert type(included_run) is Run
+    assert included_run.id == 13
+    assert included_run.plan_id == 8
+
+
 def test_unsuccess_find(suite):
     with pytest.raises(NotFound):
         suite.cases.find(title='case title1')
+
+
+def test_list(project):
+    runs = project.runs.list()
+    assert len(runs) == 2
+    first_run = runs.find(config_ids=[9], suite_id=2)
+    assert type(first_run) == Run
+    assert first_run.id == 4
 
 
 def test_add_plan(api_mock, client, project):
@@ -353,6 +390,40 @@ def test_add_run_to_plan(api_mock, client, plan):
     assert run.id == 8
 
 
+def test_update_run_in_plan(api_mock, client, project, plan):
+    base = re.escape(client.base_url)
+
+    api_mock.register_uri(
+        'POST',
+        re.compile(base + 'update_plan_entry/{0}/.*'.format(plan.id)),
+        json={'runs': [{
+            'id': 13,
+            'case_ids': [10, 20, 30]
+        }]},
+        complete_qs=True)
+
+    run_to_update = project.runs.find(plan_id=plan.id)
+    run_to_update.case_ids = [10, 20, 30]
+
+    plan.update_run(run_to_update)
+    expected = {
+        "suite_id": run_to_update.suite_id,
+        "name": run_to_update.name,
+        "description": run_to_update.description,
+        "include_all": False,
+        "case_ids": run_to_update.case_ids,
+        "config_ids": run_to_update.config_ids,
+        "milestone_id": run_to_update.milestone_id,
+        "project_id": run_to_update.project_id,
+        "assignedto_id": run_to_update.assignedto_id,
+        "plan_id": run_to_update.plan_id,
+    }
+    result = api_mock.request_history[-1].json()
+
+    assert expected == result
+    assert plan.entries[0]['runs'][0]['case_ids'] == [10, 20, 30]
+
+
 def test_add_result(api_mock, client, run):
     base = re.escape(client.base_url)
 
@@ -405,6 +476,11 @@ def test_add_case(api_mock, client, suite):
 def test_add_results_for_cases(api_mock, client, suite, run):
     base = re.escape(client.base_url)
 
+    api_mock.register_uri(
+        'POST',
+        re.compile(base + r'update_run/.*'),
+        json={'id': 4},
+        complete_qs=True)
     api_mock.register_uri(
         'POST',
         re.compile(base + r'add_results_for_cases/.*'),

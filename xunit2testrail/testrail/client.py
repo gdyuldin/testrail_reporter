@@ -80,6 +80,11 @@ class Collection(object):
         return self().find_all(**kwargs)
 
     def find(self, **kwargs):
+        # if plan is searched perform an additional GET request to API
+        # in order to return full its data including 'entries' field
+        # see http://docs.gurock.com/testrail-api2/reference-plans#get_plans
+        if self._item_class is Plan:
+            return self.get(self().find(**kwargs).id)
         return self().find(**kwargs)
 
     def get(self, id):
@@ -89,6 +94,10 @@ class Collection(object):
         item = self._to_object(kwargs)
         result = self._add(item._api_name(), item.data)
         return self._to_object(result)
+
+    def list(self):
+        name = self._item_class._api_name()
+        return ItemSet([self._item_class(**i) for i in self._list(name=name)])
 
 
 class Item(object):
@@ -209,6 +218,11 @@ class Plan(Item):
         kwargs.update(add_kwargs)
         return super(self.__class__, self).__init__(id, **kwargs)
 
+    @property
+    def runs(self):
+        return ItemSet([Run.get(id=run['id'])
+                        for entry in self.entries for run in entry['runs']])
+
     def add_run(self, run):
         url = 'add_plan_entry/{}'.format(self.id)
         run_data = {
@@ -230,11 +244,19 @@ class Plan(Item):
         run.id = new_run_data.pop('id')
         run.data.update(new_run_data)
 
+    def update_run(self, run):
+        entry = [_entry
+                 for _entry in self.entries for _run in _entry['runs']
+                 if _run['id'] == run.id
+                 ].pop()
+        url = 'update_plan_entry/{0}/{1}'.format(self.id, entry['id'])
+        entry.update(self._handler('POST', url, json=run.data))
+
 
 class Run(Item):
     def __init__(self,
-                 suite_id,
-                 milestone_id,
+                 suite_id=None,
+                 milestone_id=None,
                  config_ids=(),
                  name="",
                  description="",
@@ -247,6 +269,7 @@ class Run(Item):
         add_kwargs.pop('self')
         add_kwargs.pop('kwargs')
         add_kwargs.pop('id')
+        add_kwargs.pop('__class__', None)  # always exists in Python 3
 
         kwargs.update(add_kwargs)
         return super(self.__class__, self).__init__(id, **kwargs)
@@ -260,6 +283,24 @@ class Run(Item):
         return ResultCollection(Result, parent_id=self.id)
 
     def add_results_for_cases(self, cases):
+        if not self.include_all:
+            # IDs can't be taken from self.case_ids set because it's always
+            # empty now, see https://goo.gl/uunbEH
+            cases_ids = [test.case_id for test in self.tests.list()]
+            missing_cases_ids = [case.id for case in cases
+                                 if case.id not in cases_ids]
+            if missing_cases_ids:
+                logger.debug('Adding {0} missing test cases '
+                             'to the run'.format(len(missing_cases_ids)))
+                self.case_ids = cases_ids + missing_cases_ids
+                try:
+                    self.update()
+                except requests.HTTPError as e:
+                    if e.response.status_code != 403:
+                        raise
+                    # error 403 'operation is not allowed' means that the run
+                    # belongs to some plan and can't be edited independently
+                    Plan.get(id=self.plan_id).update_run(run=self)
         return self.results.add_for_cases(self.id, cases)
 
 
@@ -349,10 +390,11 @@ class Client(object):
                 break
         # Redirect or error
         if response.status_code >= 300:
-            raise Exception("Wrong response:\n"
-                            "status_code: {0.status_code}\n"
-                            "headers: {0.headers}\n"
-                            "content: '{0.content}'".format(response))
+            raise requests.HTTPError("Wrong response:\n"
+                                     "status_code: {0.status_code}\n"
+                                     "headers: {0.headers}\n"
+                                     "content: '{0.content}'".format(response),
+                                     response=response)
         result = response.json()
         if 'error' in result:
             logger.warning(result)
