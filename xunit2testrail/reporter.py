@@ -44,7 +44,8 @@ class Reporter(object):
         super(Reporter, self).__init__(*args, **kwargs)
 
     def config_testrail(self, base_url, username, password, milestone, project,
-                        tests_suite, plan_name, send_skipped=False):
+                        tests_suite, plan_name, send_skipped=False,
+                        use_test_run_if_exists=False):
         self._config['testrail'] = dict(base_url=base_url,
                                         username=username,
                                         password=password, )
@@ -55,6 +56,7 @@ class Reporter(object):
         self.plan_description = '{plan_name} tests'.format(
             plan_name=self.plan_name)
         self.send_skipped = send_skipped
+        self.use_test_run_if_exists = use_test_run_if_exists
 
     @property
     def testrail_client(self):
@@ -217,14 +219,13 @@ class Reporter(object):
         cases[:] = filtered_cases
         return cases
 
-    def create_test_run(self, plan, cases):
-        run_name = "{0.env_description} <{0.tests_suite_name}>".format(self)
-        description = ('Run **{run_name}** on #{plan_name}. \n'
+    def create_test_run(self, name, plan, cases):
+        description = ('Run **{name}** on #{plan_name}. \n'
                        '[Test results]({self.test_results_link})').format(
-                           run_name=run_name,
+                           name=name,
                            plan_name=self.plan_name,
                            self=self)
-        run = Run(name=run_name,
+        run = Run(name=name,
                   description=description,
                   suite_id=self.suite.id,
                   milestone_id=self.milestone.id,
@@ -232,6 +233,20 @@ class Reporter(object):
                   case_ids=[x.id for x in cases], )
         plan.add_run(run)
         return run
+
+    def get_or_create_test_run(self, plan, cases):
+        # run name can't have whitespaces in the beginning or in the end
+        # because they are silently trimmed by server side (API or database)
+        run_name = ("{0.env_description} "
+                    "<{0.tests_suite_name}>").format(self).strip()
+        if self.use_test_run_if_exists:
+            try:
+                run = plan.runs.find(name=run_name, suite_id=self.suite.id)
+                logger.debug('Found test run "{}"'.format(run_name))
+                return run
+            except NotFound:
+                logger.debug('Test run "{}" not found'.format(run_name))
+        return self.create_test_run(run_name, plan, cases)
 
     def print_run_url(self, test_run):
         print('[TestRun URL] {}'.format(test_run.url))
@@ -243,6 +258,6 @@ class Reporter(object):
             logger.warning('No cases matched, programm will terminated')
             return
         plan = self.get_or_create_plan()
-        test_run = self.create_test_run(plan, cases)
+        test_run = self.get_or_create_test_run(plan, cases)
         test_run.add_results_for_cases(cases)
         self.print_run_url(test_run)
