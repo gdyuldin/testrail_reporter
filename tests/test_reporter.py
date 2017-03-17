@@ -5,9 +5,9 @@ import re
 import pytest
 import six
 from six.moves import StringIO
+import testrail
 
 from xunit2testrail import Reporter
-from xunit2testrail.testrail.client import Case
 
 if six.PY2:
     import mock
@@ -16,18 +16,8 @@ else:
 
 
 @pytest.fixture
-def testrail_client(mocker):
-    fake_statuses = mock.PropertyMock(return_value={1: 'passed', 2: 'skipped'})
-    mocker.patch(
-        'xunit2testrail.reporter.TrClient.statuses',
-        new_callable=fake_statuses)
-    return
-
-
-@pytest.fixture
-def reporter(testrail_client):
+def reporter(testrail_client_mock):
     reporter = Reporter(
-        xunit_report='tests/xunit_files/report.xml',
         env_description='vlan_ceph',
         test_results_link="http://test_job/",
         case_mapper=None,
@@ -65,14 +55,6 @@ def paste_api(api_mock):
         'POST', re.compile(paste_url), json={"data": "123"}, complete_qs=True)
 
 
-def test_parse_report(reporter):
-    suite, result = reporter.get_xunit_test_suite()
-    assert all(suite)
-    assert len(list(suite)) == 65
-    assert len(result.skipped) == 25
-    assert len(result.failures) == 13
-
-
 def test_print_run_url(reporter, mocker):
     stdout = mocker.patch('sys.stdout', new=StringIO())
     reporter.print_run_url(mock.Mock(url='http://report_url/'))
@@ -98,15 +80,14 @@ def test_get_jenkins_report_url(reporter, classname, methodname, expected_url):
     assert expected_url == reporter.get_jenkins_report_url(xunit_case)
 
 
-def test_add_result_to_case(reporter, xunit_case):
-    testrail_case = Case()
+def test_get_cases_results_data_comment(reporter, xunit_case):
     xunit_case.message = u'успешно'
     xunit_case.stderr = u'stderr message сообщение'
     xunit_case.stdout = u'stdout message сообщение'
     xunit_case.trace = u'trace сообщение'
     report_url = reporter.get_jenkins_report_url(xunit_case)
-    reporter.add_result_to_case(testrail_case, xunit_case)
-    comment = testrail_case.result.comment
+    result_data = reporter.get_cases_results_data(xunit_case)
+    comment = result_data['comment']
     assert report_url in comment
     assert reporter.env_description in comment
     assert xunit_case.message in comment
@@ -115,12 +96,25 @@ def test_add_result_to_case(reporter, xunit_case):
     assert xunit_case.trace in comment
 
 
+@pytest.mark.parametrize(['xunit_status', 'testrail_status'], [
+    ('success', 'passed'),
+    ('failure', 'failed'),
+    ('error', 'blocked'),
+    ('skipped', 'skipped'),
+])
+def test_get_cases_results_data_status(reporter, xunit_case, xunit_status,
+                                       testrail_status):
+    xunit_case.result = xunit_status
+    reporter.send_skipped = True
+    result_data = reporter.get_cases_results_data(xunit_case)
+    assert result_data['status'].name == testrail_status
+
+
 @pytest.mark.parametrize('send_skipped', [True, False])
 def test_send_skipped_param(reporter, xunit_case_skipped, send_skipped):
     reporter.send_skipped = send_skipped
-    testrail_case = Case()
-    reporter.add_result_to_case(testrail_case, xunit_case_skipped)
-    assert send_skipped == (testrail_case.result is not None)
+    result_data = reporter.get_cases_results_data(xunit_case_skipped)
+    assert send_skipped == (result_data is not None)
 
 
 def test_no_trace_on_success_test_on_testrail(reporter, xunit_case):
@@ -146,3 +140,71 @@ def test_paste_store_data(api_mock, reporter, xunit_case, paste_api, prop,
     assert value in payload['code']
     for absent_prop in absent_props:
         assert absent_prop not in payload['code']
+
+
+def test_get_plan(reporter, mocker):
+    expected_plan = mock.Mock()
+    mocker.patch('testrail.TestRail.plan', return_value=expected_plan)
+    plan = reporter.get_or_create_plan()
+    assert plan == expected_plan
+
+
+def test_create_plan(reporter, mocker):
+    expected_plan = mock.Mock()
+    saved_plan = mock.Mock()
+    mocker.patch('testrail.TestRail.milestone')
+    add_method = mocker.patch('testrail.TestRail.add', return_value=saved_plan)
+    mocker.patch('testrail.TestRail.plan', side_effect=[None, expected_plan])
+    plan = reporter.get_or_create_plan()
+    assert plan == saved_plan
+    add_method.assert_called_once_with(expected_plan)
+
+
+def test_get_exists_test_run(reporter, mocker):
+    entry_name = ("{0.env_description} "
+                  "<{0.tests_suite_name}>").format(reporter).strip()
+    expected_run = mock.Mock()
+    mocker.patch(
+        'testrail.entry.Entry.runs',
+        new_callable=mock.PropertyMock,
+        return_value=[expected_run])
+    entry = testrail.entry.Entry({'name': entry_name})
+    mocker.patch(
+        'testrail.plan.Plan.entries',
+        new_callable=mock.PropertyMock,
+        return_value=[entry])
+    plan = testrail.plan.Plan({'id': 1, 'name': 'plan'})
+    reporter.use_test_run_if_exists = True
+    run = reporter.get_or_create_test_run(plan, {})
+    assert run == expected_run
+
+
+def test_get_not_exists_test_run(reporter, mocker):
+    expected_run = mock.Mock()
+    saved_run = mock.Mock()
+    mocker.patch(
+        'testrail.plan.Plan.entries',
+        new_callable=mock.PropertyMock,
+        return_value=[])
+    plan = testrail.plan.Plan({'id': 1, 'name': 'plan'})
+    mocker.patch('testrail.TestRail.milestone')
+    mocker.patch('testrail.TestRail.suite')
+    mocker.patch('testrail.TestRail.run', return_value=expected_run)
+    add_method = mocker.patch('testrail.TestRail.add', return_value=saved_run)
+    reporter.use_test_run_if_exists = True
+    run = reporter.get_or_create_test_run(plan, {})
+    assert run == saved_run
+    add_method.assert_called_once_with(expected_run)
+
+
+def test_create_test_run(reporter, mocker):
+    expected_run = mock.Mock()
+    saved_run = mock.Mock()
+    plan = testrail.plan.Plan({'name': 'plan', 'id': 1})
+    mocker.patch('testrail.TestRail.milestone')
+    mocker.patch('testrail.TestRail.suite')
+    mocker.patch('testrail.TestRail.run', return_value=expected_run)
+    add_method = mocker.patch('testrail.TestRail.add', return_value=saved_run)
+    run = reporter.get_or_create_test_run(plan, {})
+    assert run == saved_run
+    add_method.assert_called_once_with(expected_run)

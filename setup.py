@@ -18,7 +18,8 @@ setup(
     package_data={'': ['templates/*']},
     entry_points={
               'console_scripts': [
-                  'report = xunit2testrail.cmd:main'
+                  'report = xunit2testrail.cmd:main',
+                  'create_test_suite = xunit2testrail.cmd:create_test_suite'
               ]
           },
     url="https://github.com/gdyuldin/testrail_reporter",
@@ -26,6 +27,7 @@ setup(
         'setuptools>=17.1',
         'requests>=2.4.2',
         'pytest-runner',
+        'testrail',
         'Jinja2',
         'six',
         'prettytable',

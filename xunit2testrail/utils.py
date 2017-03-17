@@ -1,4 +1,5 @@
 import abc
+import os
 import re
 from uuid import UUID
 from collections import defaultdict
@@ -6,6 +7,10 @@ import logging
 
 import prettytable
 import six
+
+import testrail
+
+from .vendor import xunitparser
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +82,8 @@ class CaseMapper(object):
     def describe_testrail_case(self, case):
         return {
             k: v
-            for k, v in case.data.items() if isinstance(v, six.string_types)
+            for k, v in case.raw_data().items()
+            if isinstance(v, six.string_types)
         }
 
     def print_pair_data(self, testrail_case, xunit_case):
@@ -159,10 +165,10 @@ class TemplateCaseMapper(CaseMapper):
         xunit_dict = self.describe_xunit_case(xunit_case)
         try:
             xunit_id = self.xunit_name_template.format(**xunit_dict)
-        except NoneValueException as e:
+        except NoneValueException:
             logger.warning(
-                "{e!r}: Can't extract {template} from `{case}`".format(
-                    e=e, template=self.xunit_name_template, case=xunit_case))
+                "Can't extract {template} from `{case}`".format(
+                    template=self.xunit_name_template, case=xunit_case))
             return []
 
         # Search symbols groups, which is absent in xunit_id
@@ -191,3 +197,39 @@ def truncate_head(banner, text, max_len):
         max_text_len -= len(start)
         text = start + text[-max_text_len:]
     return banner + text
+
+
+def get_testrail_client(username, password, base_url, project_name):
+    """Return authorized testrail client."""
+    os.environ.update(
+        dict(
+            TESTRAIL_USER_EMAIL=username,
+            TESTRAIL_USER_KEY=password,
+            TESTRAIL_URL=base_url))
+    client = testrail.TestRail()
+    project = client.project(project_name)
+    if project is None:
+        raise ValueError('Project {!r} is not found'.format(project_name))
+    client.set_project_id(project.id)
+    return client
+
+
+def get_milestone(client, milestone_name):
+    milestone = client.milestone(milestone_name)
+    if milestone is None:
+        raise ValueError('Milestone {!r} is not found'.format(milestone_name))
+    return milestone
+
+
+def get_suite(client, suite_name):
+    suite = client.suite(suite_name)
+    if suite is None:
+        raise ValueError('Suite {!r} is not found'.format(suite_name))
+    return suite
+
+
+def get_xunit_cases(xunit_report):
+    with open(xunit_report) as f:
+        ts, _ = xunitparser.parse(f)
+        for case in ts:
+            yield case
