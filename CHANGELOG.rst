@@ -1,8 +1,33 @@
 Changelog
 =========
 
-%%version%% (unreleased)
-------------------------
+v0.7.1 (2017-03-17)
+-------------------
+
+Fix
+~~~
+
+- Extracting vaues from xunit cases, that contains 'None' [Georgy
+  Dyuldin]
+
+Other
+~~~~~
+
+- Merge pull request #4 from artem-panchenko/updateTestRunFeature.
+  [Georgy Dyuldin]
+
+  Add possibility to update existing test run
+
+- Add possibility to update existing test run. [Artem Panchenko]
+
+  Introduce new option '--testrail-run-update' which
+  allows to complement existing test run by adding
+  missing tests to the plan entry. It allows to split
+  a suite in few threads, then run tests and report
+  results into single test run fully independently.
+
+v0.7.0 (2017-02-07)
+-------------------
 
 New
 ~~~

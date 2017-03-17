@@ -63,6 +63,13 @@ def test_extract_case_uuid(case_name, expected_id):
         {'title': 'a.b'},
         1
     ),
+    (
+        '{classname}.{methodname}',
+        '{title}',
+        {'classname': 'a', 'methodname': 'b[None]'},
+        {'title': 'a.b[None]'},
+        1
+    ),
 ))  # yapf: disable
 def test_match_templates(x_tpl, tr_tpl, mapper, map_len, xcase_data,
                          tcase_data):

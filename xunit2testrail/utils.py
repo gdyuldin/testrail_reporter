@@ -35,13 +35,30 @@ def find_uuid(methodname):
             pass
 
 
+class NoneValueException(Exception):
+    """None value exception class."""
+
+
+class NotNoneValue(object):
+    """Value wrapper with not None checker."""
+
+    def __init__(self, value):
+        self._value = value
+
+    def __str__(self):
+        if self._value is None:
+            raise NoneValueException(self._value)
+        return str(self._value)
+
+
 def describe_xunit_case(case):
-    return {
+    xunit_dict = {
         'classname': case.classname,
         'methodname': case.methodname,
         'id': find_id(case.methodname),
         'uuid': find_uuid(case.methodname)
     }
+    return {k: NotNoneValue(v) for k, v in xunit_dict.items()}
 
 
 class CaseMapper(object):
@@ -51,10 +68,12 @@ class CaseMapper(object):
 
     def get_suitable_cases(self, xunit_case, cases):
         xunit_dict = describe_xunit_case(xunit_case)
-        xunit_id = self.xunit_name_template.format(**xunit_dict)
-        if 'None' in xunit_id:
-            logger.warning("Can't extract {template} from {case}".format(
-                template=self.xunit_name_template, case=xunit_case))
+        try:
+            xunit_id = self.xunit_name_template.format(**xunit_dict)
+        except NoneValueException as e:
+            logger.warning(
+                "{e!r}: Can't extract {template} from {case}".format(
+                    e=e, template=self.xunit_name_template, case=xunit_case))
             return []
 
         # Search symbols groups, which is absent in xunit_id
