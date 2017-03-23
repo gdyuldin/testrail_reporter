@@ -26,10 +26,11 @@ class TestCase(unittest.TestCase):
     stdout = None
     stderr = None
 
-    def __init__(self, classname, methodname):
+    def __init__(self, classname, methodname, id=None):
         super(TestCase, self).__init__()
         self.classname = classname
         self.methodname = methodname
+        self.report_id = id
 
     def __str__(self):
         return "%s (%s)" % (self.methodname, self.classname)
@@ -174,7 +175,8 @@ class Parser(object):
         tc_classname = el.attrib.get('classname') or ts.name
         if 'name' not in el.attrib:
             return
-        tc = self.TC_CLASS(tc_classname, el.attrib['name'])
+        tc_id = el.attrib.get('id', None)
+        tc = self.TC_CLASS(tc_classname, el.attrib['name'], tc_id)
         tc.seed('success', trace=el.text or None)
         tc.time = to_timedelta(el.attrib.get('time'))
         message = None
@@ -182,7 +184,7 @@ class Parser(object):
         for e in el:
             # error takes over failure in JUnit 4
             if e.tag in ('failure', 'error', 'skipped'):
-                tc = self.TC_CLASS(tc_classname, el.attrib['name'])
+                tc = self.TC_CLASS(tc_classname, el.attrib['name'], tc_id)
                 result = e.tag
                 typename = e.attrib.get('type')
 
