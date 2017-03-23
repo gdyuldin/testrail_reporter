@@ -55,9 +55,10 @@ def describe_xunit_case(case):
     xunit_dict = {
         'classname': case.classname,
         'methodname': case.methodname,
-        'id': find_id(case.methodname),
+        'id': case.report_id or find_id(case.methodname),
         'uuid': find_uuid(case.methodname)
     }
+
     return {k: NotNoneValue(v) for k, v in xunit_dict.items()}
 
 
