@@ -8,7 +8,6 @@ from six.moves import StringIO
 
 from xunit2testrail import Reporter
 from xunit2testrail.testrail.client import Case
-from xunit2testrail.testrail.client import Plan
 
 if six.PY2:
     import mock
@@ -76,12 +75,7 @@ def test_parse_report(reporter):
 
 def test_print_run_url(reporter, mocker):
     stdout = mocker.patch('sys.stdout', new=StringIO())
-    run = mock.Mock(url='http://report_url/')
-    mocker.patch.object(reporter, 'find_testrail_cases', return_value=[Case()])
-    mocker.patch.object(
-        reporter, 'get_or_create_plan', return_value=Plan('test_plan'))
-    mocker.patch.object(reporter, 'create_test_run', return_value=run)
-    reporter.execute()
+    reporter.print_run_url(mock.Mock(url='http://report_url/'))
     assert stdout.getvalue() == ('[TestRun URL] http://report_url/\n')
 
 

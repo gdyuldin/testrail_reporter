@@ -1,7 +1,23 @@
 Changelog
 =========
 
-v0.7.1 (2017-03-17)
+%%version%% (unreleased)
+------------------------
+
+- Add dry-run mode to reporter. [Georgy Dyuldin]
+
+- Merge pull request #5 from artem-panchenko/addCaseReportIdField.
+  [Georgy Dyuldin]
+
+  Allow to use report id for matching test cases
+
+- Allow to use report id for matching test cases. [Artem Panchenko]
+
+  Some tools like 'tempest' generate test reports that
+  may contain additional 'id' fields in results, which
+  can be used for xunit <-> testrail cases mapping.
+
+v0.7.2 (2017-03-17)
 -------------------
 
 Fix

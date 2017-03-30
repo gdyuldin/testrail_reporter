@@ -27,11 +27,12 @@ setup(
         'requests>=2.4.2',
         'pytest-runner',
         'Jinja2',
-        'six'
+        'six',
+        'prettytable',
     ],
     extras_require={'test': [
         'pytest-mock',
-        'pytest-capturelog',
+        'pytest-catchlog',
         'requests-mock',
     ]},
 )

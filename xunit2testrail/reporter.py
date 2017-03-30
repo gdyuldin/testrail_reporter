@@ -209,15 +209,16 @@ class Reporter(object):
                                  comment=comment)
         return testrail_case
 
-    def find_testrail_cases(self, xunit_suite):
+    def map_cases(self, xunit_suite):
         cases = self.suite.cases()
-        mapping = self.case_mapper.map(xunit_suite, cases)
+        return self.case_mapper.map(xunit_suite, cases)
+
+    def fill_case_results(self, mapping):
         filtered_cases = []
         for testrail_case, xunit_case in mapping.items():
             if self.add_result_to_case(testrail_case, xunit_case):
                 filtered_cases.append(testrail_case)
-        cases[:] = filtered_cases
-        return cases
+        return filtered_cases
 
     def create_test_run(self, name, plan, cases):
         description = ('Run **{name}** on #{plan_name}. \n'
@@ -250,14 +251,3 @@ class Reporter(object):
 
     def print_run_url(self, test_run):
         print('[TestRun URL] {}'.format(test_run.url))
-
-    def execute(self):
-        xunit_suite, _ = self.get_xunit_test_suite()
-        cases = self.find_testrail_cases(xunit_suite)
-        if len(cases) == 0:
-            logger.warning('No cases matched, programm will terminated')
-            return
-        plan = self.get_or_create_plan()
-        test_run = self.get_or_create_test_run(plan, cases)
-        test_run.add_results_for_cases(cases)
-        self.print_run_url(test_run)

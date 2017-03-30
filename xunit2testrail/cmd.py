@@ -1,16 +1,21 @@
 #!/usr/bin/env python
 
 import argparse
+import functools
 import logging
 import os
 import sys
+import textwrap
 import traceback
 import warnings
 
-from xunit2testrail import CaseMapper
+import prettytable
+
+from xunit2testrail import TemplateCaseMapper
 from xunit2testrail import Reporter
 
 warnings.simplefilter('always', DeprecationWarning)
+logger = logging.getLogger(__name__)
 
 if sys.version_info[0] == 3:
     str_cls = str
@@ -71,7 +76,7 @@ def parse_args(args):
         default=defaults['ENV_DESCRIPTION'],
         help='env deploy type description (for TestRun name)')
 
-    group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_mutually_exclusive_group()
     group.add_argument(
         '--iso-id',
         type=str_cls,
@@ -135,6 +140,11 @@ def parse_args(args):
         default=False,
         help='don\'t create new test run if such already exists')
     parser.add_argument(
+        '--dry-run', '-n',
+        action='store_true',
+        default=False,
+        help='Just print mapping table')
+    parser.add_argument(
         '--verbose',
         '-v',
         action='store_true',
@@ -142,6 +152,20 @@ def parse_args(args):
         help='Verbose mode')
 
     return parser.parse_args(args)
+
+
+def print_mapping_table(mapping, wrap=60):
+    """Print mapping result table."""
+    pt = prettytable.PrettyTable(field_names=['ID', 'Tilte', 'Xunit case'])
+    pt.align = 'l'
+    wrapper = functools.partial(
+        textwrap.fill, width=wrap, break_long_words=False)
+    for testrail_case, xunit_case in mapping.items():
+        xunit_str = '{0.methodname}\n({0.classname})'.format(xunit_case)
+        pt.add_row([
+            testrail_case.id, wrapper(testrail_case.title), wrapper(xunit_str)
+        ])
+    print(pt)
 
 
 def main(args=None):
@@ -164,7 +188,7 @@ def main(args=None):
 
     logging.basicConfig(**logger_dict)
 
-    case_mapper = CaseMapper(
+    case_mapper = TemplateCaseMapper(
         xunit_name_template=args.xunit_name_template,
         testrail_name_template=args.testrail_name_template)
 
@@ -185,7 +209,20 @@ def main(args=None):
         tests_suite=suite,
         send_skipped=args.send_skipped,
         use_test_run_if_exists=args.use_test_run_if_exists)
-    reporter.execute()
+
+    xunit_suite, _ = reporter.get_xunit_test_suite()
+    mapping = reporter.map_cases(xunit_suite)
+    if not args.dry_run:
+        cases = reporter.fill_case_results(mapping)
+        if len(cases) == 0:
+            logger.warning('No cases matched, programm will terminated')
+            return
+        plan = reporter.get_or_create_plan()
+        test_run = reporter.get_or_create_test_run(plan, cases)
+        test_run.add_results_for_cases(cases)
+        reporter.print_run_url(test_run)
+    else:
+        print_mapping_table(mapping)
 
 
 if __name__ == '__main__':
