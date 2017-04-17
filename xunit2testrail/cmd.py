@@ -48,7 +48,7 @@ def parse_args(args):
         'TESTRAIL_PLAN_NAME': None,
         'ENV_DESCRIPTION': '',
         'TEST_RESULTS_LINK': '',
-        'PASTE_BASE_URL': 'http://srv99-bud.infra.mirantis.net:5000/'
+        'PASTE_BASE_URL': 'http://srv62-bud.infra.mirantis.net:5000/'
     }
     defaults = {k: os.environ.get(k, v) for k, v in defaults.items()}
 
