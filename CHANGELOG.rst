@@ -1,7 +1,7 @@
 Changelog
 =========
 
-%%version%% (unreleased)
+v0.7.3 (2017-04-17)
 ------------------------
 
 - Add dry-run mode to reporter. [Georgy Dyuldin]
