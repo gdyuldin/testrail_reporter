@@ -164,7 +164,7 @@ class Reporter(object):
         template = self.env.get_template('testrail_comment.md')
         jenkins_url = self.get_jenkins_report_url(xunit_case)
         paste_url = None
-        if not xunit_case.success:
+        if not xunit_case.success and self.paste_url:
             try:
                 paste_url = self.save_to_paste(xunit_case)
             except Exception as e:
