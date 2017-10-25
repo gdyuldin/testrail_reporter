@@ -48,7 +48,7 @@ def parse_args(args):
         'TESTRAIL_PLAN_NAME': None,
         'ENV_DESCRIPTION': '',
         'TEST_RESULTS_LINK': '',
-        'PASTE_BASE_URL': 'http://srv62-bud.infra.mirantis.net:5000/'
+        'PASTE_BASE_URL': None
     }
     defaults = {k: os.environ.get(k, v) for k, v in defaults.items()}
 
@@ -132,7 +132,8 @@ def parse_args(args):
         '--paste-url',
         type=str_cls,
         default=defaults['PASTE_BASE_URL'],
-        help='paste service to send test case logs and trace')
+        help=('pastebin service JSON API URL to send test case logs and trace,'
+              ' example: http://localhost:5000/'))
     parser.add_argument(
         '--testrail-run-update',
         dest='use_test_run_if_exists',
