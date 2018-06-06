@@ -25,7 +25,8 @@ def test_help(capsys, mocker):
 
 def test_reporter_map_cases(mocker):
     mock_map_cases = mocker.patch('xunit2testrail.reporter.Reporter.map_cases')
-    testargs = ['report', 'tests/xunit_files/report.xml']
+    testargs = ['report', 'tests/xunit_files/report.xml',
+                '--testrail-plan-name', 'testplan']
     mocker.patch.object(sys, 'argv', testargs)
     cmd.main()
     assert 1 == mock_map_cases.call_count
@@ -34,7 +35,8 @@ def test_reporter_map_cases(mocker):
 def test_reporter_dry_run_table_header(mocker, capsys):
     """Check that dry run prints table header."""
     mocker.patch('xunit2testrail.reporter.Reporter.map_cases')
-    testargs = ['report', '--dry-run', 'tests/xunit_files/report.xml']
+    testargs = ['report', '--dry-run', 'tests/xunit_files/report.xml',
+                '--testrail-plan-name', 'testplan']
     mocker.patch.object(sys, 'argv', testargs)
     cmd.main()
     out, err = capsys.readouterr()
@@ -47,7 +49,8 @@ def test_dry_run_not_create_entities_in_testrail(mocker, method):
     """Check that dry run mode is not create anything on testrail."""
     mocker.patch('xunit2testrail.reporter.Reporter.map_cases')
     method_mock = mocker.patch('xunit2testrail.reporter.Reporter.' + method)
-    testargs = ['report', '--dry-run', 'tests/xunit_files/report.xml']
+    testargs = ['report', '--dry-run', 'tests/xunit_files/report.xml',
+                '--testrail-plan-name', 'testplan']
     mocker.patch.object(sys, 'argv', testargs)
     cmd.main()
     assert not method_mock.called

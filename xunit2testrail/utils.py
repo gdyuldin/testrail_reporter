@@ -97,7 +97,7 @@ class CaseMapper(object):
             pt.add_row([k, v.value])
         print(pt)
 
-    def _check_collisions(self, mapping):
+    def _check_collisions(self, mapping, allow_duplicates=False):
         """Check cases collisions."""
         def get_duplicates(array, pos):
             grouped = defaultdict(list)
@@ -107,29 +107,33 @@ class CaseMapper(object):
                 grouped[index].append(el[0])
             return [(k, v) for k, v in grouped.items() if len(v) > 1]
 
-        duplicated_xunit_cases = get_duplicates(mapping, 0)
-        if duplicated_xunit_cases:
-            logger.error('Found xunit cases matches to single testrail case:')
-            for tr_case, xu_cases in duplicated_xunit_cases:
-                for xu_case in xu_cases:
-                    logger.error('TestRail "{0.title}" - xUnit "{1.classname}.'
-                                 '{1.methodname}"'.format(tr_case, xu_case))
-            raise Exception("Can't map some xunit cases")
-        duplicated_testrail_cases = get_duplicates(mapping, 1)
-        if duplicated_testrail_cases:
-            logger.error('Found testrail cases matches to single xunit case:')
-            for xu_case, tr_cases in duplicated_testrail_cases:
-                for tr_case in tr_cases:
-                    logger.error('xUnit "{1.classname}.{1.methodname} - '
-                                 'TestRail "{0.title}"'.format(tr_case,
-                                                               xu_case))
-            raise Exception("Can't map some testrail cases")
+        if not allow_duplicates:
+            duplicated_xunit_cases = get_duplicates(mapping, 0)
+            if duplicated_xunit_cases:
+                logger.error(
+                    'Found xunit cases matches to single testrail case:')
+                for tr_case, xu_cases in duplicated_xunit_cases:
+                    for xu_case in xu_cases:
+                        logger.error(
+                            'TestRail "{0.title}" - xUnit "{1.classname}.'
+                            '{1.methodname}"'.format(tr_case, xu_case))
+                raise Exception("Can't map some xunit cases")
+            duplicated_testrail_cases = get_duplicates(mapping, 1)
+            if duplicated_testrail_cases:
+                logger.error(
+                    'Found testrail cases matches to single xunit case:')
+                for xu_case, tr_cases in duplicated_testrail_cases:
+                    for tr_case in tr_cases:
+                        logger.error('xUnit "{1.classname}.{1.methodname} - '
+                                     'TestRail "{0.title}"'.format(tr_case,
+                                                                   xu_case))
+                raise Exception("Can't map some testrail cases")
 
     @abc.abstractmethod
     def get_suitable_cases(self, xunit_case, cases):
         """Return all suitable testrail cases for xunit case."""
 
-    def map(self, xunit_suite, testrail_cases):
+    def map(self, xunit_suite, testrail_cases, allow_duplicates=False):
         mapping = []
         for xunit_case in xunit_suite:
             suitable_cases = self.get_suitable_cases(xunit_case,
@@ -143,7 +147,7 @@ class CaseMapper(object):
 
         if len(mapping) == 0 and all([len(xunit_suite), len(testrail_cases)]):
             self.print_pair_data(testrail_cases[-1], xunit_case)
-        self._check_collisions(mapping)
+        self._check_collisions(mapping, allow_duplicates=allow_duplicates)
         return dict(mapping)
 
 
@@ -171,16 +175,23 @@ class TemplateCaseMapper(CaseMapper):
         for group in split_symbols_base:
             if re.search(r'[{}]'.format(group), xunit_id) is None:
                 split_symbols += group
-        split_expr = re.compile(r'[{}]'.format(split_symbols))
+
+        split_expr = re.compile(r'[{}]'.format(split_symbols))\
+            if split_symbols else None
         match_cases = []
         for case in cases:
             case_data = self.describe_testrail_case(case)
             testrail_id = self.testrail_name_template.format(**case_data)
-            groups = [x for x in split_expr.split(testrail_id) if x]
-            groups.reverse()
-            for group in groups:
-                if group == xunit_id:
+
+            if split_expr is None:
+                if xunit_id == testrail_id:
                     match_cases.append(case)
+            else:
+                groups = [x for x in split_expr.split(testrail_id) if x]
+                groups.reverse()
+                for group in groups:
+                    if group == xunit_id:
+                        match_cases.append(case)
         return match_cases
 
 
