@@ -32,7 +32,6 @@ setup(
     ],
     extras_require={'test': [
         'pytest-mock',
-        'pytest-catchlog',
         'requests-mock',
     ]},
 )

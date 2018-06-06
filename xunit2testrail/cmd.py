@@ -129,6 +129,11 @@ def parse_args(args):
         default=False,
         help='send skipped cases to testrail')
     parser.add_argument(
+        '--send-duplicates',
+        action='store_true',
+        default=False,
+        help='send duplicated cases to testrail')
+    parser.add_argument(
         '--paste-url',
         type=str_cls,
         default=defaults['PASTE_BASE_URL'],
@@ -209,6 +214,7 @@ def main(args=None):
         plan_name=args.testrail_plan_name,
         tests_suite=suite,
         send_skipped=args.send_skipped,
+        send_duplicates=args.send_duplicates,
         use_test_run_if_exists=args.use_test_run_if_exists)
 
     xunit_suite, _ = reporter.get_xunit_test_suite()

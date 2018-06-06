@@ -45,7 +45,7 @@ class Reporter(object):
 
     def config_testrail(self, base_url, username, password, milestone, project,
                         tests_suite, plan_name, send_skipped=False,
-                        use_test_run_if_exists=False):
+                        use_test_run_if_exists=False, send_duplicates=False):
         self._config['testrail'] = dict(base_url=base_url,
                                         username=username,
                                         password=password, )
@@ -56,6 +56,7 @@ class Reporter(object):
         self.plan_description = '{plan_name} tests'.format(
             plan_name=self.plan_name)
         self.send_skipped = send_skipped
+        self.send_duplicates = send_duplicates
         self.use_test_run_if_exists = use_test_run_if_exists
 
     @property
@@ -211,7 +212,7 @@ class Reporter(object):
 
     def map_cases(self, xunit_suite):
         cases = self.suite.cases()
-        return self.case_mapper.map(xunit_suite, cases)
+        return self.case_mapper.map(xunit_suite, cases, self.send_duplicates)
 
     def fill_case_results(self, mapping):
         filtered_cases = []
